@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Læreroversikt v1.1</title>
+  <title>Læreroversikt v1.2</title>
   <meta name="theme-color" content="#1f4f46" />
   <style>
     :root{
@@ -45,7 +45,7 @@
     }
     main{max-width:1100px;margin:auto;padding:18px}
     .tabs{
-      display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:18px;
+      display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin-bottom:18px;
     }
     .tab-btn{
       border:0; border-radius:14px; padding:12px 10px; font-weight:700;
@@ -137,7 +137,7 @@
       <h1>Læreroversikt</h1>
       <small>Planlegging, progresjon og labb</small>
     </div>
-    <div class="version">v1.1</div>
+    <div class="version">v1.2</div>
   </div>
 </header>
 
@@ -147,6 +147,7 @@
     <button class="tab-btn" data-tab="arsplan">Årsplan</button>
     <button class="tab-btn" data-tab="labb">Labb</button>
     <button class="tab-btn" data-tab="mistet">Mistet tid</button>
+    <button class="tab-btn" data-tab="oppsett">Oppsett</button>
   </div>
 
   <section id="oversikt" class="panel active">
@@ -156,20 +157,17 @@
         <div class="row">
           <div>
             <label>Klasse</label>
-            <input id="lessonClass" placeholder="f.eks. 8A" />
+            <select id="lessonClass" onchange="updateLessonSubjects()"></select>
           </div>
           <div>
             <label>Fag</label>
-            <select id="lessonSubject">
-              <option>Matematikk</option>
-              <option>Naturfag</option>
-            </select>
+            <select id="lessonSubject" onchange="updateLessonTopics()"></select>
           </div>
         </div>
         <div class="row" style="margin-top:10px">
           <div>
             <label>Tema</label>
-            <input id="lessonTopic" placeholder="f.eks. Algebra" />
+            <select id="lessonTopic"></select>
           </div>
           <div>
             <label>Hvor kom dere?</label>
@@ -217,14 +215,11 @@
         <div class="row">
           <div>
             <label>Fag</label>
-            <select id="planSubject">
-              <option>Matematikk</option>
-              <option>Naturfag</option>
-            </select>
+            <select id="planSubject"></select>
           </div>
           <div>
-            <label>Klasse/trinn</label>
-            <input id="planClass" placeholder="f.eks. 8A eller 8. trinn" />
+            <label>Klasse</label>
+            <select id="planClass"></select>
           </div>
         </div>
         <div class="row" style="margin-top:10px">
@@ -261,7 +256,7 @@
       <div class="card">
         <h2>Klasse og elever</h2>
         <label>Klasse</label>
-        <input id="labClass" placeholder="f.eks. 8B" />
+        <select id="labClass"></select>
         <div style="margin-top:10px">
           <label>Elevnavn, ett navn per linje</label>
           <textarea id="studentNames" placeholder="Ola Nordmann&#10;Kari Nordmann"></textarea>
@@ -272,7 +267,7 @@
       <div class="card">
         <h2>Opprett labb</h2>
         <label>Klasse</label>
-        <input id="newLabClass" placeholder="f.eks. 8B" />
+        <select id="newLabClass"></select>
         <div style="margin-top:10px">
           <label>Navn på labb</label>
           <input id="labName" placeholder="f.eks. Påvise stivelse i matvarer" />
@@ -307,14 +302,11 @@
         <div class="row">
           <div>
             <label>Klasse</label>
-            <input id="lostClass" placeholder="f.eks. 8A" />
+            <select id="lostClass" onchange="updateLostSubjects()"></select>
           </div>
           <div>
             <label>Fag</label>
-            <select id="lostSubject">
-              <option>Matematikk</option>
-              <option>Naturfag</option>
-            </select>
+            <select id="lostSubject"></select>
           </div>
         </div>
         <div class="row" style="margin-top:10px">
@@ -373,6 +365,62 @@
     </div>
   </section>
 
+
+  <section id="oppsett" class="panel">
+    <div class="grid two">
+      <div class="card">
+        <h2>Klasser</h2>
+        <label>Ny klasse</label>
+        <div class="row">
+          <div><input id="setupClassName" placeholder="f.eks. 8A" /></div>
+          <div style="flex:0 0 auto"><button class="primary" onclick="addSetupClass()">Legg til klasse</button></div>
+        </div>
+        <div id="setupClassList" style="margin-top:12px"></div>
+      </div>
+
+      <div class="card">
+        <h2>Fag</h2>
+        <label>Klasse</label>
+        <select id="setupSubjectClass"></select>
+        <div style="margin-top:10px">
+          <label>Nytt fag</label>
+          <div class="row">
+            <div><input id="setupSubjectName" placeholder="f.eks. Matematikk" /></div>
+            <div style="flex:0 0 auto"><button class="primary" onclick="addSetupSubject()">Legg til fag</button></div>
+          </div>
+        </div>
+        <div id="setupSubjectList" style="margin-top:12px"></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <h2>Temaer</h2>
+      <div class="row">
+        <div>
+          <label>Klasse</label>
+          <select id="setupTopicClass" onchange="updateSetupTopicSubjects()"></select>
+        </div>
+        <div>
+          <label>Fag</label>
+          <select id="setupTopicSubject"></select>
+        </div>
+      </div>
+      <div style="margin-top:10px">
+        <label>Nytt tema</label>
+        <div class="row">
+          <div><input id="setupTopicName" placeholder="f.eks. Algebra" /></div>
+          <div style="flex:0 0 auto"><button class="primary" onclick="addSetupTopic()">Legg til tema</button></div>
+        </div>
+      </div>
+      <div id="setupTopicList" style="margin-top:12px"></div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <h2>Slik brukes oppsettet</h2>
+      <p class="muted">Når du har registrert klasser, fag og temaer her, dukker de automatisk opp som rullegardinvalg i undervisning, årsplan, labb og mistet tid. Målet er at den daglige bruken skal kreve minst mulig skriving.</p>
+    </div>
+  </section>
+
 </main>
 
 <script>
@@ -396,13 +444,16 @@ let data = JSON.parse(localStorage.getItem("laereroversikt_v1")) || {
   plans: [],
   classes: {},
   labs: [],
-  lost: []
+  lost: [],
+  setup: {classes:{}}
 };
 data.lessons ||= [];
 data.plans ||= [];
 data.classes ||= {};
 data.labs ||= [];
 data.lost ||= [];
+data.setup ||= {classes:{}};
+data.setup.classes ||= {};
 
 
 function persist(){
@@ -418,6 +469,9 @@ document.querySelectorAll(".tab-btn").forEach(btn=>{
     document.getElementById(btn.dataset.tab).classList.add("active");
   });
 });
+document.getElementById("setupSubjectClass")?.addEventListener("change",renderSetupLists);
+document.getElementById("setupTopicSubject")?.addEventListener("change",renderSetupTopicList);
+
 
 function isoWeek(date=new Date()){
   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
@@ -427,10 +481,134 @@ function isoWeek(date=new Date()){
   return Math.ceil((((d-yearStart)/86400000)+1)/7);
 }
 
+
+function setupClasses(){
+  return Object.keys(data.setup.classes).sort((a,b)=>a.localeCompare(b,"nb"));
+}
+function subjectsFor(cls){
+  return Object.keys((data.setup.classes[cls]||{}).subjects||{}).sort((a,b)=>a.localeCompare(b,"nb"));
+}
+function topicsFor(cls,subject){
+  return (((data.setup.classes[cls]||{}).subjects||{})[subject]||[]).slice();
+}
+function fillSelect(id, values, placeholder="Velg..."){
+  const el=document.getElementById(id);
+  if(!el) return;
+  const old=el.value;
+  el.innerHTML=`<option value="">${placeholder}</option>` + values.map(v=>`<option value="${escapeAttr(v)}">${escapeHtml(v)}</option>`).join("");
+  if(values.includes(old)) el.value=old;
+}
+function refreshSetupDrivenSelects(){
+  const classes=setupClasses();
+  ["lessonClass","planClass","labClass","newLabClass","lostClass","setupSubjectClass","setupTopicClass"].forEach(id=>fillSelect(id,classes,"Velg klasse"));
+  const allSubjects=[...new Set(classes.flatMap(c=>subjectsFor(c)))].sort((a,b)=>a.localeCompare(b,"nb"));
+  fillSelect("planSubject",allSubjects,"Velg fag");
+  updateLessonSubjects();
+  updateLostSubjects();
+  updateSetupTopicSubjects();
+  renderSetupLists();
+}
+function updateLessonSubjects(){
+  const cls=document.getElementById("lessonClass").value;
+  fillSelect("lessonSubject",subjectsFor(cls),"Velg fag");
+  updateLessonTopics();
+}
+function updateLessonTopics(){
+  const cls=document.getElementById("lessonClass").value;
+  const subject=document.getElementById("lessonSubject").value;
+  fillSelect("lessonTopic",topicsFor(cls,subject),"Velg tema");
+}
+function updateLostSubjects(){
+  const cls=document.getElementById("lostClass").value;
+  fillSelect("lostSubject",subjectsFor(cls),"Velg fag");
+}
+function updateSetupTopicSubjects(){
+  const cls=document.getElementById("setupTopicClass").value;
+  fillSelect("setupTopicSubject",subjectsFor(cls),"Velg fag");
+  renderSetupTopicList();
+}
+function addSetupClass(){
+  const name=document.getElementById("setupClassName").value.trim();
+  if(!name) return alert("Skriv inn navn på klassen.");
+  if(!data.setup.classes[name]) data.setup.classes[name]={subjects:{}};
+  document.getElementById("setupClassName").value="";
+  persist();
+}
+function deleteSetupClass(name){
+  if(!confirm(`Slette klassen ${name} fra oppsettet?`)) return;
+  delete data.setup.classes[name];
+  persist();
+}
+function addSetupSubject(){
+  const cls=document.getElementById("setupSubjectClass").value;
+  const subject=document.getElementById("setupSubjectName").value.trim();
+  if(!cls || !subject) return alert("Velg klasse og skriv inn fag.");
+  data.setup.classes[cls] ||= {subjects:{}};
+  data.setup.classes[cls].subjects ||= {};
+  data.setup.classes[cls].subjects[subject] ||= [];
+  document.getElementById("setupSubjectName").value="";
+  persist();
+}
+function deleteSetupSubject(cls,subject){
+  if(!confirm(`Slette ${subject} fra ${cls}?`)) return;
+  delete data.setup.classes[cls].subjects[subject];
+  persist();
+}
+function addSetupTopic(){
+  const cls=document.getElementById("setupTopicClass").value;
+  const subject=document.getElementById("setupTopicSubject").value;
+  const topic=document.getElementById("setupTopicName").value.trim();
+  if(!cls || !subject || !topic) return alert("Velg klasse og fag, og skriv inn tema.");
+  const arr=data.setup.classes[cls].subjects[subject];
+  if(!arr.includes(topic)) arr.push(topic);
+  document.getElementById("setupTopicName").value="";
+  persist();
+}
+function deleteSetupTopic(cls,subject,topic){
+  data.setup.classes[cls].subjects[subject]=data.setup.classes[cls].subjects[subject].filter(t=>t!==topic);
+  persist();
+}
+function renderSetupLists(){
+  const classes=setupClasses();
+  const classList=document.getElementById("setupClassList");
+  if(classList){
+    classList.innerHTML=classes.length?classes.map(c=>`
+      <div class="plan-item">
+        <div><strong>${escapeHtml(c)}</strong></div>
+        <div class="muted">${subjectsFor(c).length} fag</div>
+        <button class="small-btn secondary" onclick="deleteSetupClass('${c.replace(/'/g,"\\'")}')">Slett</button>
+      </div>`).join(""):'<div class="empty">Ingen klasser registrert ennå.</div>';
+  }
+  const selectedClass=document.getElementById("setupSubjectClass")?.value;
+  const subjectList=document.getElementById("setupSubjectList");
+  if(subjectList){
+    const subjects=subjectsFor(selectedClass);
+    subjectList.innerHTML=subjects.length?subjects.map(s=>`
+      <div class="plan-item">
+        <div><strong>${escapeHtml(s)}</strong></div>
+        <div class="muted">${topicsFor(selectedClass,s).length} temaer</div>
+        <button class="small-btn secondary" onclick="deleteSetupSubject('${selectedClass.replace(/'/g,"\\'")}','${s.replace(/'/g,"\\'")}')">Slett</button>
+      </div>`).join(""):'<div class="empty">Velg klasse eller legg til fag.</div>';
+  }
+  renderSetupTopicList();
+}
+function renderSetupTopicList(){
+  const cls=document.getElementById("setupTopicClass")?.value||"";
+  const subject=document.getElementById("setupTopicSubject")?.value||"";
+  const list=document.getElementById("setupTopicList");
+  if(!list) return;
+  const topics=topicsFor(cls,subject);
+  list.innerHTML=topics.length?topics.map(t=>`
+    <div class="plan-item">
+      <div style="grid-column:span 2"><strong>${escapeHtml(t)}</strong></div>
+      <button class="small-btn secondary" onclick="deleteSetupTopic('${cls.replace(/'/g,"\\'")}','${subject.replace(/'/g,"\\'")}','${t.replace(/'/g,"\\'")}')">Slett</button>
+    </div>`).join(""):'<div class="empty">Ingen temaer registrert for valgt fag.</div>';
+}
+
 function saveLesson(){
-  const cls = lessonClass.value.trim();
+  const cls = lessonClass.value;
   const subject = lessonSubject.value;
-  const topic = lessonTopic.value.trim();
+  const topic = lessonTopic.value;
   const reached = lessonReached.value.trim();
   if(!cls || !topic || !reached) return alert("Fyll inn klasse, tema og hvor dere kom.");
   data.lessons.unshift({
@@ -440,13 +618,13 @@ function saveLesson(){
     date: new Date().toISOString().slice(0,10),
     week: isoWeek()
   });
-  lessonTopic.value=""; lessonReached.value=""; lessonNext.value=""; lessonNote.value="";
+  lessonReached.value=""; lessonNext.value=""; lessonNote.value="";
   persist();
 }
 
 function savePlan(){
   const subject = planSubject.value;
-  const cls = planClass.value.trim();
+  const cls = planClass.value;
   const from = Number(planFrom.value);
   const to = Number(planTo.value);
   const topic = planTopic.value.trim();
@@ -457,7 +635,7 @@ function savePlan(){
 }
 
 function saveStudents(){
-  const cls = labClass.value.trim();
+  const cls = labClass.value;
   const names = studentNames.value.split("\n").map(x=>x.trim()).filter(Boolean);
   if(!cls || !names.length) return alert("Fyll inn klasse og minst én elev.");
   data.classes[cls] = names;
@@ -466,7 +644,7 @@ function saveStudents(){
 }
 
 function createLab(){
-  const cls = newLabClass.value.trim();
+  const cls = newLabClass.value;
   const name = labName.value.trim();
   const date = labDate.value || new Date().toISOString().slice(0,10);
   if(!cls || !name) return alert("Fyll inn klasse og navn på labben.");
@@ -632,7 +810,7 @@ function deleteActiveLab(){
 
 
 function saveLostTime(){
-  const cls = document.getElementById("lostClass").value.trim();
+  const cls = document.getElementById("lostClass").value;
   const subject = document.getElementById("lostSubject").value;
   const d = document.getElementById("lostDate").value || new Date().toISOString().slice(0,10);
   const hours = Number(document.getElementById("lostHours").value);
@@ -717,6 +895,7 @@ function renderStats(){
 }
 
 function renderAll(){
+  refreshSetupDrivenSelects();
   renderStats();
   renderProgress();
   renderLessons();

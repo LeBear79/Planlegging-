@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Læreroversikt v1.3</title>
+  <meta name="theme-color" content="#1f4f46" />
+  <style>
+    :root{
+      --bg:#f4f6f5;
+      --card:#ffffff;
+      --text:#1f2a27;
+      --muted:#6b7773;
+      --primary:#1f4f46;
+      --primary-2:#2f6d61;
+      --border:#dfe6e3;
+      --good:#dff3e8;
+      --warn:#fff0c9;
+      --bad:#fde0de;
+      --shadow:0 8px 24px rgba(20,50,44,.08);
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      background:var(--bg);
+      color:var(--text);
+    }
+    header{
+      position:sticky; top:0; z-index:10;
+      background:rgba(244,246,245,.94);
+      backdrop-filter:blur(10px);
+      border-bottom:1px solid var(--border);
+    }
+    .topbar{
+      max-width:1100px; margin:auto; padding:14px 18px;
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+    }
+    .brand h1{font-size:1.25rem;margin:0}
+    .brand small{color:var(--muted)}
+    .version{
+      font-size:.8rem; color:var(--muted); border:1px solid var(--border);
+      padding:5px 9px; border-radius:999px; background:#fff;
+    }
+    main{max-width:1100px;margin:auto;padding:18px}
+    .tabs{
+      display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin-bottom:18px;
+    }
+    .tab-btn{
+      border:0; border-radius:14px; padding:12px 10px; font-weight:700;
+      background:#e7ecea; color:var(--text); cursor:pointer;
+    }
+    .tab-btn.active{background:var(--primary);color:#fff}
+    .panel{display:none}
+    .panel.active{display:block}
+    .grid{display:grid;gap:14px}
+    .grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .card{
+      background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
+      padding:16px; box-shadow:var(--shadow);
+    }
+    h2,h3{margin:0 0 12px}
+    .muted{color:var(--muted)}
+    label{display:block;font-size:.88rem;font-weight:700;margin-bottom:6px}
+    input,select,textarea{
+      width:100%; border:1px solid #cfd9d5; border-radius:12px;
+      padding:11px 12px; font:inherit; background:#fff; color:var(--text);
+    }
+    textarea{min-height:88px;resize:vertical}
+    .row{display:flex;gap:10px;align-items:end}
+    .row > *{flex:1}
+    button.primary,.small-btn{
+      border:0; background:var(--primary); color:#fff; border-radius:12px;
+      padding:11px 14px; font-weight:700; cursor:pointer;
+    }
+    .small-btn{padding:8px 10px;font-size:.85rem}
+    .secondary{background:#e9efed!important;color:var(--text)!important}
+    .danger{background:#8b2f2b!important}
+    .progress-list{display:grid;gap:10px}
+    .progress-item{
+      border:1px solid var(--border); border-radius:14px; padding:13px;
+      display:grid; grid-template-columns:1.2fr 1fr 1fr auto; gap:10px; align-items:center;
+    }
+    .status{
+      padding:6px 10px; border-radius:999px; font-size:.8rem; font-weight:800; white-space:nowrap;
+    }
+    .status.good{background:var(--good);color:#215b3d}
+    .status.warn{background:var(--warn);color:#7a5a00}
+    .status.bad{background:var(--bad);color:#8b2f2b}
+    .lesson-log{display:grid;gap:8px;margin-top:10px}
+    .log-item{
+      border-left:4px solid var(--primary-2); background:#f8faf9; padding:10px 12px; border-radius:10px;
+    }
+    .plan-item{
+      display:grid; grid-template-columns:110px 1fr auto; gap:10px; align-items:center;
+      border-bottom:1px solid var(--border); padding:10px 0;
+    }
+    .plan-item:last-child{border-bottom:0}
+    .quick-tags{display:flex;flex-wrap:wrap;gap:8px}
+    .tag{
+      border:1px solid #cfd9d5; border-radius:999px; padding:8px 10px;
+      background:#fff; cursor:pointer; font-size:.86rem;
+    }
+    .tag.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+    .student-card{border:1px solid var(--border);border-radius:14px;padding:12px;margin-top:10px}
+    .student-head{display:flex;gap:10px;align-items:center;justify-content:space-between}
+    .student-head strong{font-size:1rem}
+    .student-status{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+    .student-status button{
+      border:1px solid #cfd9d5; background:#fff; padding:7px 9px; border-radius:10px; cursor:pointer;
+    }
+    .student-status button.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+    .student-notes{display:none;margin-top:10px}
+    .student-card.open .student-notes{display:block}
+    .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+    .stat{padding:14px;border-radius:14px;background:#f8faf9;border:1px solid var(--border)}
+    .stat b{display:block;font-size:1.35rem}
+    .empty{padding:18px;text-align:center;color:var(--muted)}
+    .privacy{
+      font-size:.82rem;color:var(--muted);margin-top:14px;line-height:1.45
+    }
+    @media(max-width:760px){
+      .grid.two{grid-template-columns:1fr}
+      .progress-item{grid-template-columns:1fr}
+      .row{flex-direction:column;align-items:stretch}
+      .tabs{grid-template-columns:1fr 1fr}
+      .tab-btn{font-size:.82rem}
+      .stat-grid{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div class="topbar">
+    <div class="brand">
+      <h1>Læreroversikt</h1>
+      <small>Planlegging, progresjon og labb</small>
+    </div>
+    <div class="version">v1.3</div>
+  </div>
+</header>
+
+<main>
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="oversikt">Oversikt</button>
+    <button class="tab-btn" data-tab="arsplan">Årsplan</button>
+    <button class="tab-btn" data-tab="labb">Labb</button>
+    <button class="tab-btn" data-tab="mistet">Mistet tid</button>
+    <button class="tab-btn" data-tab="oppsett">Oppsett</button>
+  </div>
+
+  <section id="oversikt" class="panel active">
+    <div class="grid two">
+      <div class="card">
+        <h2>Registrer undervisningstime</h2>
+        <div class="row">
+          <div>
+            <label>Klasse</label>
+            <select id="lessonClass" onchange="updateLessonSubjects()"></select>
+          </div>
+          <div>
+            <label>Fag</label>
+            <select id="lessonSubject" onchange="updateLessonTopics()"></select>
+          </div>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <div>
+            <label>Tema</label>
+            <select id="lessonTopic"></select>
+          </div>
+          <div>
+            <label>Hvor kom dere?</label>
+            <input id="lessonReached" placeholder="f.eks. oppgave 3.14" />
+          </div>
+        </div>
+        <div style="margin-top:10px">
+          <label>Neste time</label>
+          <input id="lessonNext" placeholder="f.eks. Gjennomgå 3.14 og starte likninger" />
+        </div>
+        <div style="margin-top:10px">
+          <label>Kort notat</label>
+          <textarea id="lessonNote" placeholder="Valgfritt"></textarea>
+        </div>
+        <button class="primary" style="margin-top:10px" onclick="saveLesson()">Lagre time</button>
+      </div>
+
+      <div class="card">
+        <h2>Dagens oversikt</h2>
+        <div class="stat-grid">
+          <div class="stat"><span class="muted">Klasser registrert</span><b id="statClasses">0</b></div>
+          <div class="stat"><span class="muted">Årsplanpunkter</span><b id="statPlans">0</b></div>
+          <div class="stat"><span class="muted">Labber</span><b id="statLabs">0</b></div>
+          <div class="stat"><span class="muted">Mistet timer</span><b id="statLost">0</b></div>
+        </div>
+        <p class="privacy">Data i denne versjonen lagres lokalt i nettleseren på enheten. Det sendes ikke noe til en server. Unngå likevel sensitive elevopplysninger før løsningen eventuelt er godkjent for bruk av arbeidsgiver.</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <h2>Progresjon</h2>
+      <div id="progressList" class="progress-list"></div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <h2>Siste undervisningstimer</h2>
+      <div id="lessonLog" class="lesson-log"></div>
+    </div>
+  </section>
+
+  <section id="arsplan" class="panel">
+    <div class="grid two">
+      <div class="card">
+        <h2>Legg til i årsplan</h2>
+        <div class="row">
+          <div>
+            <label>Fag</label>
+            <select id="planSubject"></select>
+          </div>
+          <div>
+            <label>Klasse</label>
+            <select id="planClass"></select>
+          </div>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <div>
+            <label>Fra uke</label>
+            <input id="planFrom" type="number" min="1" max="53" />
+          </div>
+          <div>
+            <label>Til uke</label>
+            <input id="planTo" type="number" min="1" max="53" />
+          </div>
+        </div>
+        <div style="margin-top:10px">
+          <label>Tema</label>
+          <input id="planTopic" placeholder="f.eks. Algebra og likninger" />
+        </div>
+        <button class="primary" style="margin-top:10px" onclick="savePlan()">Legg til</button>
+      </div>
+
+      <div class="card">
+        <h2>Hvordan status beregnes</h2>
+        <p class="muted">v1.0 bruker en enkel sammenligning mellom aktuell kalenderuke og ukeintervallet i årsplanen. Senere kan dette gjøres mer presist med antall undervisningstimer per klasse.</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <h2>Årsplan</h2>
+      <div id="planList"></div>
+    </div>
+  </section>
+
+  <section id="labb" class="panel">
+    <div class="grid two">
+      <div class="card">
+        <h2>Klasse og elever</h2>
+        <label>Klasse</label>
+        <select id="labClass" onchange="renderStudentRegisterPreview()"></select>
+        <div style="margin-top:10px">
+          <label>Elevnavn, ett navn per linje</label>
+          <p class="muted" style="margin:0 0 8px">Elevene får automatisk fast nummer i den rekkefølgen de registreres: Elev 1, Elev 2 osv.</p>
+          <textarea id="studentNames" placeholder="Ola Nordmann&#10;Kari Nordmann"></textarea>
+        </div>
+        <button class="primary" style="margin-top:10px" onclick="saveStudents()">Lagre elevliste</button>
+        <div id="studentRegisterPreview" style="margin-top:12px"></div>
+      </div>
+
+      <div class="card">
+        <h2>Opprett labb</h2>
+        <label>Klasse</label>
+        <select id="newLabClass"></select>
+        <div style="margin-top:10px">
+          <label>Navn på labb</label>
+          <input id="labName" placeholder="f.eks. Påvise stivelse i matvarer" />
+        </div>
+        <div style="margin-top:10px">
+          <label>Dato</label>
+          <input id="labDate" type="date" />
+        </div>
+        <button class="primary" style="margin-top:10px" onclick="createLab()">Opprett labb</button>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <h2>Aktiv labb</h2>
+      <p class="muted">Navnet vises lokalt for deg. Elevnummeret kan senere brukes som KI-ID slik at navn ikke trenger å sendes til KI.</p>
+      <div class="row">
+        <div>
+          <label>Velg labb</label>
+          <select id="labSelect" onchange="renderActiveLab()"></select>
+        </div>
+        <div style="flex:0 0 auto">
+          <button class="small-btn danger" onclick="deleteActiveLab()">Slett labb</button>
+        </div>
+      </div>
+      <div id="activeLab"></div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <h2>Elevnummer og personvern</h2>
+      <p class="muted">Hver elev får et fast elevnummer. Ved en senere KI-funksjon kan appen bruke «Elev 1», «Elev 2» osv. i stedet for navn. Dette er pseudonymisering, men bruk av reelle elevdata må fortsatt følge skolens og kommunens regler.</p>
+    </div>
+  </section>
+
+  <section id="mistet" class="panel">
+    <div class="grid two">
+      <div class="card">
+        <h2>Registrer mistet undervisning</h2>
+        <div class="row">
+          <div>
+            <label>Klasse</label>
+            <select id="lostClass" onchange="updateLostSubjects()"></select>
+          </div>
+          <div>
+            <label>Fag</label>
+            <select id="lostSubject"></select>
+          </div>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <div>
+            <label>Dato</label>
+            <input id="lostDate" type="date" />
+          </div>
+          <div>
+            <label>Antall timer</label>
+            <input id="lostHours" type="number" min="0.5" step="0.5" value="1" />
+          </div>
+        </div>
+        <div style="margin-top:10px">
+          <label>Årsak</label>
+          <select id="lostReason">
+            <option>Den kulturelle skolesekken</option>
+            <option>Tur / aktivitetsdag</option>
+            <option>Skolearrangement</option>
+            <option>Prøve / kartlegging</option>
+            <option>Fridag / planleggingsdag</option>
+            <option>Annet</option>
+          </select>
+        </div>
+        <div style="margin-top:10px">
+          <label>Kort notat</label>
+          <input id="lostNote" placeholder="Valgfritt" />
+        </div>
+        <button class="primary" style="margin-top:10px" onclick="saveLostTime()">Registrer mistet time</button>
+      </div>
+
+      <div class="card">
+        <h2>Totaloversikt</h2>
+        <div class="stat-grid">
+          <div class="stat"><span class="muted">Totalt</span><b id="lostTotal">0 t</b></div>
+          <div class="stat"><span class="muted">Matematikk</span><b id="lostMath">0 t</b></div>
+          <div class="stat"><span class="muted">Naturfag</span><b id="lostScience">0 t</b></div>
+        </div>
+        <p class="muted" style="margin-top:12px">Oversikten summerer registrerte bortfall i denne nettleseren.</p>
+      </div>
+    </div>
+
+    <div class="grid two" style="margin-top:14px">
+      <div class="card">
+        <h2>Per klasse og fag</h2>
+        <div id="lostByClass"></div>
+      </div>
+      <div class="card">
+        <h2>Fordelt på årsak</h2>
+        <div id="lostByReason"></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <h2>Registrerte bortfall</h2>
+      <div id="lostLog"></div>
+    </div>
+  </section>
+
+
+  <section id="oppsett" class="panel">
+    <div class="card" style="margin-bottom:14px">
+      <h2>Oppsett</h2>
+      <p class="muted">Gjør dette én gang først: registrer klasser, legg fag til hver klasse og legg deretter temaer til hvert fag. Etterpå brukes disse som rullegardinvalg i resten av appen.</p>
+    </div>
+    <div class="grid two">
+      <div class="card">
+        <h2>1. Registrer klasser</h2>
+        <label>Ny klasse</label>
+        <div class="row">
+          <div><input id="setupClassName" placeholder="f.eks. 8A" /></div>
+          <div style="flex:0 0 auto"><button class="primary" onclick="addSetupClass()">Legg til klasse</button></div>
+        </div>
+        <div id="setupClassList" style="margin-top:12px"></div>
+      </div>
+
+      <div class="card">
+        <h2>2. Legg fag til klasse</h2>
+        <label>Klasse</label>
+        <select id="setupSubjectClass"></select>
+        <div style="margin-top:10px">
+          <label>Nytt fag</label>
+          <div class="row">
+            <div><input id="setupSubjectName" placeholder="f.eks. Matematikk" /></div>
+            <div style="flex:0 0 auto"><button class="primary" onclick="addSetupSubject()">Legg til fag</button></div>
+          </div>
+        </div>
+        <div id="setupSubjectList" style="margin-top:12px"></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <h2>3. Legg tema til fag</h2>
+      <div class="row">
+        <div>
+          <label>Klasse</label>
+          <select id="setupTopicClass" onchange="updateSetupTopicSubjects()"></select>
+        </div>
+        <div>
+          <label>Fag</label>
+          <select id="setupTopicSubject"></select>
+        </div>
+      </div>
+      <div style="margin-top:10px">
+        <label>Nytt tema</label>
+        <div class="row">
+          <div><input id="setupTopicName" placeholder="f.eks. Algebra" /></div>
+          <div style="flex:0 0 auto"><button class="primary" onclick="addSetupTopic()">Legg til tema</button></div>
+        </div>
+      </div>
+      <div id="setupTopicList" style="margin-top:12px"></div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <h2>Slik brukes oppsettet</h2>
+      <p class="muted">Når du har registrert klasser, fag og temaer her, dukker de automatisk opp som rullegardinvalg i undervisning, årsplan, labb og mistet tid. Målet er at den daglige bruken skal kreve minst mulig skriving.</p>
+    </div>
+  </section>
+
+</main>
+
+<script>
+const QUICK_TAGS = [
+  "Jobber godt i timen",
+  "Jobber selvstendig",
+  "Trenger mye veiledning",
+  "Har lite fokus",
+  "Har god kontroll på utstyrsnavn",
+  "Er usikker på utstyrsnavn",
+  "Bruker utstyret sikkert",
+  "Trenger veiledning i bruk av utstyr",
+  "Forstår hensikten med forsøket",
+  "Gjør gode observasjoner",
+  "Forklarer resultatene godt",
+  "Trenger hjelp til å tolke resultatene"
+];
+
+let data = JSON.parse(localStorage.getItem("laereroversikt_v1")) || {
+  lessons: [],
+  plans: [],
+  classes: {},
+  labs: [],
+  lost: [],
+  setup: {classes:{}}
+};
+data.lessons ||= [];
+data.plans ||= [];
+data.classes ||= {};
+data.labs ||= [];
+data.lost ||= [];
+data.setup ||= {classes:{}};
+data.setup.classes ||= {};
+
+for (const cls of Object.keys(data.classes)) {
+  const val = data.classes[cls];
+  if (Array.isArray(val)) {
+    data.classes[cls] = val.map((item, i) => {
+      if (typeof item === "string") return {id:i+1, name:item};
+      return {id:item.id || i+1, name:item.name || String(item)};
+    });
+  }
+}
+
+
+
+function persist(){
+  localStorage.setItem("laereroversikt_v1", JSON.stringify(data));
+  renderAll();
+}
+
+document.querySelectorAll(".tab-btn").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
+    document.querySelectorAll(".panel").forEach(p=>p.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById(btn.dataset.tab).classList.add("active");
+  });
+});
+document.getElementById("setupSubjectClass")?.addEventListener("change",renderSetupLists);
+document.getElementById("setupTopicSubject")?.addEventListener("change",renderSetupTopicList);
+
+
+function isoWeek(date=new Date()){
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+  return Math.ceil((((d-yearStart)/86400000)+1)/7);
+}
+
+
+function setupClasses(){
+  return Object.keys(data.setup.classes).sort((a,b)=>a.localeCompare(b,"nb"));
+}
+function subjectsFor(cls){
+  return Object.keys((data.setup.classes[cls]||{}).subjects||{}).sort((a,b)=>a.localeCompare(b,"nb"));
+}
+function topicsFor(cls,subject){
+  return (((data.setup.classes[cls]||{}).subjects||{})[subject]||[]).slice();
+}
+function fillSelect(id, values, placeholder="Velg..."){
+  const el=document.getElementById(id);
+  if(!el) return;
+  const old=el.value;
+  el.innerHTML=`<option value="">${placeholder}</option>` + values.map(v=>`<option value="${escapeAttr(v)}">${escapeHtml(v)}</option>`).join("");
+  if(values.includes(old)) el.value=old;
+}
+function refreshSetupDrivenSelects(){
+  const classes=setupClasses();
+  ["lessonClass","planClass","labClass","newLabClass","lostClass","setupSubjectClass","setupTopicClass"].forEach(id=>fillSelect(id,classes,"Velg klasse"));
+  const allSubjects=[...new Set(classes.flatMap(c=>subjectsFor(c)))].sort((a,b)=>a.localeCompare(b,"nb"));
+  fillSelect("planSubject",allSubjects,"Velg fag");
+  updateLessonSubjects();
+  updateLostSubjects();
+  updateSetupTopicSubjects();
+  renderSetupLists();
+}
+function updateLessonSubjects(){
+  const cls=document.getElementById("lessonClass").value;
+  fillSelect("lessonSubject",subjectsFor(cls),"Velg fag");
+  updateLessonTopics();
+}
+function updateLessonTopics(){
+  const cls=document.getElementById("lessonClass").value;
+  const subject=document.getElementById("lessonSubject").value;
+  fillSelect("lessonTopic",topicsFor(cls,subject),"Velg tema");
+}
+function updateLostSubjects(){
+  const cls=document.getElementById("lostClass").value;
+  fillSelect("lostSubject",subjectsFor(cls),"Velg fag");
+}
+function updateSetupTopicSubjects(){
+  const cls=document.getElementById("setupTopicClass").value;
+  fillSelect("setupTopicSubject",subjectsFor(cls),"Velg fag");
+  renderSetupTopicList();
+}
+function addSetupClass(){
+  const name=document.getElementById("setupClassName").value.trim();
+  if(!name) return alert("Skriv inn navn på klassen.");
+  if(!data.setup.classes[name]) data.setup.classes[name]={subjects:{}};
+  document.getElementById("setupClassName").value="";
+  persist();
+}
+function deleteSetupClass(name){
+  if(!confirm(`Slette klassen ${name} fra oppsettet?`)) return;
+  delete data.setup.classes[name];
+  persist();
+}
+function addSetupSubject(){
+  const cls=document.getElementById("setupSubjectClass").value;
+  const subject=document.getElementById("setupSubjectName").value.trim();
+  if(!cls || !subject) return alert("Velg klasse og skriv inn fag.");
+  data.setup.classes[cls] ||= {subjects:{}};
+  data.setup.classes[cls].subjects ||= {};
+  data.setup.classes[cls].subjects[subject] ||= [];
+  document.getElementById("setupSubjectName").value="";
+  persist();
+}
+function deleteSetupSubject(cls,subject){
+  if(!confirm(`Slette ${subject} fra ${cls}?`)) return;
+  delete data.setup.classes[cls].subjects[subject];
+  persist();
+}
+function addSetupTopic(){
+  const cls=document.getElementById("setupTopicClass").value;
+  const subject=document.getElementById("setupTopicSubject").value;
+  const topic=document.getElementById("setupTopicName").value.trim();
+  if(!cls || !subject || !topic) return alert("Velg klasse og fag, og skriv inn tema.");
+  const arr=data.setup.classes[cls].subjects[subject];
+  if(!arr.includes(topic)) arr.push(topic);
+  document.getElementById("setupTopicName").value="";
+  persist();
+}
+function deleteSetupTopic(cls,subject,topic){
+  data.setup.classes[cls].subjects[subject]=data.setup.classes[cls].subjects[subject].filter(t=>t!==topic);
+  persist();
+}
+function renderSetupLists(){
+  const classes=setupClasses();
+  const classList=document.getElementById("setupClassList");
+  if(classList){
+    classList.innerHTML=classes.length?classes.map(c=>`
+      <div class="plan-item">
+        <div><strong>${escapeHtml(c)}</strong></div>
+        <div class="muted">${subjectsFor(c).length} fag</div>
+        <button class="small-btn secondary" onclick="deleteSetupClass('${c.replace(/'/g,"\\'")}')">Slett</button>
+      </div>`).join(""):'<div class="empty">Ingen klasser registrert ennå.</div>';
+  }
+  const selectedClass=document.getElementById("setupSubjectClass")?.value;
+  const subjectList=document.getElementById("setupSubjectList");
+  if(subjectList){
+    const subjects=subjectsFor(selectedClass);
+    subjectList.innerHTML=subjects.length?subjects.map(s=>`
+      <div class="plan-item">
+        <div><strong>${escapeHtml(s)}</strong></div>
+        <div class="muted">${topicsFor(selectedClass,s).length} temaer</div>
+        <button class="small-btn secondary" onclick="deleteSetupSubject('${selectedClass.replace(/'/g,"\\'")}','${s.replace(/'/g,"\\'")}')">Slett</button>
+      </div>`).join(""):'<div class="empty">Velg klasse eller legg til fag.</div>';
+  }
+  renderSetupTopicList();
+}
+function renderSetupTopicList(){
+  const cls=document.getElementById("setupTopicClass")?.value||"";
+  const subject=document.getElementById("setupTopicSubject")?.value||"";
+  const list=document.getElementById("setupTopicList");
+  if(!list) return;
+  const topics=topicsFor(cls,subject);
+  list.innerHTML=topics.length?topics.map(t=>`
+    <div class="plan-item">
+      <div style="grid-column:span 2"><strong>${escapeHtml(t)}</strong></div>
+      <button class="small-btn secondary" onclick="deleteSetupTopic('${cls.replace(/'/g,"\\'")}','${subject.replace(/'/g,"\\'")}','${t.replace(/'/g,"\\'")}')">Slett</button>
+    </div>`).join(""):'<div class="empty">Ingen temaer registrert for valgt fag.</div>';
+}
+
+function saveLesson(){
+  const cls = lessonClass.value;
+  const subject = lessonSubject.value;
+  const topic = lessonTopic.value;
+  const reached = lessonReached.value.trim();
+  if(!cls || !topic || !reached) return alert("Fyll inn klasse, tema og hvor dere kom.");
+  data.lessons.unshift({
+    id: Date.now(), cls, subject, topic, reached,
+    next: lessonNext.value.trim(),
+    note: lessonNote.value.trim(),
+    date: new Date().toISOString().slice(0,10),
+    week: isoWeek()
+  });
+  lessonReached.value=""; lessonNext.value=""; lessonNote.value="";
+  persist();
+}
+
+function savePlan(){
+  const subject = planSubject.value;
+  const cls = planClass.value;
+  const from = Number(planFrom.value);
+  const to = Number(planTo.value);
+  const topic = planTopic.value.trim();
+  if(!cls || !topic || !from || !to) return alert("Fyll inn alle feltene.");
+  data.plans.push({id:Date.now(),subject,cls,from,to,topic});
+  planTopic.value=""; planFrom.value=""; planTo.value="";
+  persist();
+}
+
+function saveStudents(){
+  const cls = labClass.value;
+  const names = studentNames.value.split("\n").map(x=>x.trim()).filter(Boolean);
+  if(!cls || !names.length) return alert("Velg klasse og skriv inn minst én elev.");
+
+  const existing = Array.isArray(data.classes[cls]) ? data.classes[cls] : [];
+  const byName = new Map(existing.map(s => [s.name, s.id]));
+  let nextId = existing.reduce((m,s)=>Math.max(m, Number(s.id)||0),0) + 1;
+
+  data.classes[cls] = names.map(name => {
+    if (byName.has(name)) return {id:byName.get(name), name};
+    return {id:nextId++, name};
+  });
+
+  persist();
+  alert("Elevlisten er lagret.");
+}
+
+function renderStudentRegisterPreview(){
+  const box = document.getElementById("studentRegisterPreview");
+  if(!box) return;
+  const cls = document.getElementById("labClass")?.value || "";
+  const students = Array.isArray(data.classes[cls]) ? data.classes[cls] : [];
+  if(!cls || !students.length){
+    box.innerHTML = '<div class="empty">Ingen elevliste lagret for valgt klasse.</div>';
+    return;
+  }
+  box.innerHTML = students.map(s=>`
+    <div class="plan-item">
+      <div><strong>Elev ${s.id}</strong></div>
+      <div>${escapeHtml(s.name)}</div>
+      <div></div>
+    </div>`).join("");
+}
+
+function createLab(){
+  const cls = newLabClass.value;
+  const name = labName.value.trim();
+  const date = labDate.value || new Date().toISOString().slice(0,10);
+  if(!cls || !name) return alert("Fyll inn klasse og navn på labben.");
+  const students = (data.classes[cls] || []).map(student=>({
+    id: student.id,
+    name: student.name,
+    status:"Gjennomført",
+    tags:[],
+    note:""
+  }));
+  if(!students.length) return alert("Lagre elevlisten for klassen først.");
+  data.labs.unshift({id:Date.now(),cls,name,date,students});
+  labName.value="";
+  persist();
+}
+
+function getPlanStatus(lesson){
+  const week = isoWeek();
+  const candidates = data.plans.filter(p =>
+    p.subject === lesson.subject &&
+    (p.cls.toLowerCase() === lesson.cls.toLowerCase() ||
+     p.cls.toLowerCase().includes(lesson.cls.toLowerCase().replace(/[a-zæøå]/gi,"").trim()))
+  );
+  const current = candidates.find(p=>week>=p.from && week<=p.to);
+  if(!current) return {text:"Ingen plan", cls:"warn", planned:"–"};
+  return {text:"I rute?", cls:"good", planned:current.topic};
+}
+
+function renderProgress(){
+  const container = document.getElementById("progressList");
+  const latest = {};
+  data.lessons.forEach(l=>{
+    const key=l.cls+"|"+l.subject;
+    if(!latest[key]) latest[key]=l;
+  });
+  const items = Object.values(latest);
+  if(!items.length){container.innerHTML='<div class="empty">Ingen undervisningstimer registrert ennå.</div>';return;}
+  container.innerHTML = items.map(l=>{
+    const st=getPlanStatus(l);
+    return `<div class="progress-item">
+      <div><strong>${escapeHtml(l.cls)} · ${escapeHtml(l.subject)}</strong><br><span class="muted">${escapeHtml(l.topic)}</span></div>
+      <div><span class="muted">Planlagt</span><br>${escapeHtml(st.planned)}</div>
+      <div><span class="muted">Faktisk</span><br>${escapeHtml(l.reached)}</div>
+      <span class="status ${st.cls}">${st.text}</span>
+    </div>`;
+  }).join("");
+}
+
+function renderLessons(){
+  const c=document.getElementById("lessonLog");
+  if(!data.lessons.length){c.innerHTML='<div class="empty">Ingen timer registrert ennå.</div>';return;}
+  c.innerHTML=data.lessons.slice(0,12).map(l=>`
+    <div class="log-item">
+      <strong>${escapeHtml(l.cls)} · ${escapeHtml(l.subject)} · ${escapeHtml(l.topic)}</strong>
+      <div class="muted">${l.date} · uke ${l.week}</div>
+      <div>Kom til: ${escapeHtml(l.reached)}</div>
+      ${l.next?`<div>Neste: ${escapeHtml(l.next)}</div>`:""}
+      ${l.note?`<div class="muted">Notat: ${escapeHtml(l.note)}</div>`:""}
+    </div>`).join("");
+}
+
+function renderPlans(){
+  const c=document.getElementById("planList");
+  if(!data.plans.length){c.innerHTML='<div class="empty">Ingen årsplanpunkter registrert ennå.</div>';return;}
+  c.innerHTML=data.plans
+    .sort((a,b)=>a.from-b.from)
+    .map(p=>`<div class="plan-item">
+      <div><strong>Uke ${p.from}${p.to!==p.from?"–"+p.to:""}</strong></div>
+      <div><strong>${escapeHtml(p.subject)} · ${escapeHtml(p.cls)}</strong><br><span class="muted">${escapeHtml(p.topic)}</span></div>
+      <button class="small-btn secondary" onclick="deletePlan(${p.id})">Slett</button>
+    </div>`).join("");
+}
+
+function deletePlan(id){
+  data.plans=data.plans.filter(p=>p.id!==id);
+  persist();
+}
+
+function renderLabSelect(){
+  const s=document.getElementById("labSelect");
+  const old=s.value;
+  s.innerHTML='<option value="">Velg...</option>'+data.labs.map(l=>
+    `<option value="${l.id}">${escapeHtml(l.cls)} · ${escapeHtml(l.name)} · ${l.date}</option>`
+  ).join("");
+  if(data.labs.some(l=>String(l.id)===old)) s.value=old;
+}
+
+function renderActiveLab(){
+  const id=Number(document.getElementById("labSelect").value);
+  const c=document.getElementById("activeLab");
+  const lab=data.labs.find(l=>l.id===id);
+  if(!lab){c.innerHTML='<div class="empty">Velg en labb for å registrere elevene.</div>';return;}
+  c.innerHTML=`
+    <div style="margin-top:14px">
+      <h3>${escapeHtml(lab.name)}</h3>
+      <div class="muted">${escapeHtml(lab.cls)} · ${lab.date}</div>
+    </div>
+    ${lab.students.map((s,i)=>`
+      <div class="student-card" id="student-${i}">
+        <div class="student-head">
+          <div><strong>Elev ${s.id || (i+1)}</strong><br><span class="muted">${escapeHtml(s.name)}</span></div>
+          <button class="small-btn secondary" onclick="toggleStudent(${i})">Notater</button>
+        </div>
+        <div class="student-status">
+          ${["Gjennomført","Fravær","Ikke gjennomført"].map(st=>
+            `<button class="${s.status===st?"active":""}" onclick="setStudentStatus(${lab.id},${i},'${st}')">${st}</button>`
+          ).join("")}
+        </div>
+        <div class="student-notes">
+          <div class="muted" style="margin-bottom:8px">KI-ID: Elev ${s.id || (i+1)}</div>
+          <div class="quick-tags">
+            ${QUICK_TAGS.map(t=>`<button class="tag ${s.tags.includes(t)?"active":""}" onclick="toggleTag(${lab.id},${i},'${t.replace(/'/g,"\\'")}')">${t}</button>`).join("")}
+          </div>
+          <div style="margin-top:10px">
+            <label>Egne stikkord</label>
+            <input value="${escapeAttr(s.note)}" placeholder="f.eks. god opprydding, trenger øvelse"
+              onchange="setStudentNote(${lab.id},${i},this.value)" />
+          </div>
+        </div>
+      </div>`).join("")}
+  `;
+}
+
+function toggleStudent(i){
+  const el=document.getElementById("student-"+i);
+  if(el) el.classList.toggle("open");
+}
+
+function setStudentStatus(labId,index,status){
+  const lab=data.labs.find(l=>l.id===labId);
+  if(!lab) return;
+  lab.students[index].status=status;
+  localStorage.setItem("laereroversikt_v1", JSON.stringify(data));
+  renderActiveLab();
+}
+
+function toggleTag(labId,index,tag){
+  const lab=data.labs.find(l=>l.id===labId);
+  if(!lab) return;
+  const arr=lab.students[index].tags;
+  const pos=arr.indexOf(tag);
+  if(pos>=0) arr.splice(pos,1); else arr.push(tag);
+  localStorage.setItem("laereroversikt_v1", JSON.stringify(data));
+  renderActiveLab();
+  setTimeout(()=>{
+    const card=document.getElementById("student-"+index);
+    if(card) card.classList.add("open");
+  },0);
+}
+
+function setStudentNote(labId,index,note){
+  const lab=data.labs.find(l=>l.id===labId);
+  if(!lab) return;
+  lab.students[index].note=note.trim();
+  localStorage.setItem("laereroversikt_v1", JSON.stringify(data));
+}
+
+function deleteActiveLab(){
+  const id=Number(document.getElementById("labSelect").value);
+  if(!id) return;
+  if(!confirm("Slette denne labben?")) return;
+  data.labs=data.labs.filter(l=>l.id!==id);
+  persist();
+}
+
+
+function saveLostTime(){
+  const cls = document.getElementById("lostClass").value;
+  const subject = document.getElementById("lostSubject").value;
+  const d = document.getElementById("lostDate").value || new Date().toISOString().slice(0,10);
+  const hours = Number(document.getElementById("lostHours").value);
+  const reason = document.getElementById("lostReason").value;
+  const note = document.getElementById("lostNote").value.trim();
+  if(!cls || !hours || hours <= 0) return alert("Fyll inn klasse og antall timer.");
+  data.lost.unshift({id:Date.now(), cls, subject, date:d, hours, reason, note});
+  document.getElementById("lostNote").value = "";
+  persist();
+}
+
+function deleteLostTime(id){
+  data.lost = data.lost.filter(x => x.id !== id);
+  persist();
+}
+
+function formatHours(n){
+  const num = Number(n || 0);
+  return Number.isInteger(num) ? `${num} t` : `${num.toFixed(1).replace(".",",")} t`;
+}
+
+function renderLostTime(){
+  const total = data.lost.reduce((s,x)=>s+Number(x.hours||0),0);
+  const math = data.lost.filter(x=>x.subject==="Matematikk").reduce((s,x)=>s+Number(x.hours||0),0);
+  const science = data.lost.filter(x=>x.subject==="Naturfag").reduce((s,x)=>s+Number(x.hours||0),0);
+
+  document.getElementById("lostTotal").textContent = formatHours(total);
+  document.getElementById("lostMath").textContent = formatHours(math);
+  document.getElementById("lostScience").textContent = formatHours(science);
+
+  const byClass = {};
+  data.lost.forEach(x=>{
+    const key = `${x.cls}|${x.subject}`;
+    byClass[key] = (byClass[key] || 0) + Number(x.hours||0);
+  });
+  const classEntries = Object.entries(byClass).sort((a,b)=>a[0].localeCompare(b[0],"nb"));
+  document.getElementById("lostByClass").innerHTML = classEntries.length
+    ? classEntries.map(([key,h])=>{
+        const [cls,subject] = key.split("|");
+        return `<div class="plan-item">
+          <div><strong>${escapeHtml(cls)}</strong></div>
+          <div>${escapeHtml(subject)}</div>
+          <div><strong>${formatHours(h)}</strong></div>
+        </div>`;
+      }).join("")
+    : '<div class="empty">Ingen bortfalte timer registrert ennå.</div>';
+
+  const byReason = {};
+  data.lost.forEach(x=> byReason[x.reason] = (byReason[x.reason] || 0) + Number(x.hours||0));
+  const reasonEntries = Object.entries(byReason).sort((a,b)=>b[1]-a[1]);
+  document.getElementById("lostByReason").innerHTML = reasonEntries.length
+    ? reasonEntries.map(([reason,h])=>`
+        <div class="plan-item">
+          <div style="grid-column:span 2"><strong>${escapeHtml(reason)}</strong></div>
+          <div><strong>${formatHours(h)}</strong></div>
+        </div>`).join("")
+    : '<div class="empty">Ingen årsaker å vise ennå.</div>';
+
+  const log = document.getElementById("lostLog");
+  log.innerHTML = data.lost.length
+    ? data.lost.map(x=>`
+        <div class="plan-item">
+          <div><strong>${escapeHtml(x.date)}</strong><br><span class="muted">${formatHours(x.hours)}</span></div>
+          <div><strong>${escapeHtml(x.cls)} · ${escapeHtml(x.subject)}</strong><br>
+            <span class="muted">${escapeHtml(x.reason)}${x.note ? " · "+escapeHtml(x.note) : ""}</span>
+          </div>
+          <button class="small-btn secondary" onclick="deleteLostTime(${x.id})">Slett</button>
+        </div>`).join("")
+    : '<div class="empty">Ingen bortfall registrert ennå.</div>';
+}
+
+function escapeHtml(str=""){
+  return String(str).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
+}
+function escapeAttr(str=""){ return escapeHtml(str); }
+
+function renderStats(){
+  document.getElementById("statClasses").textContent=new Set(data.lessons.map(l=>l.cls)).size;
+  document.getElementById("statPlans").textContent=data.plans.length;
+  document.getElementById("statLabs").textContent=data.labs.length;
+  document.getElementById("statLost").textContent=formatHours(data.lost.reduce((s,x)=>s+Number(x.hours||0),0));
+}
+
+function renderAll(){
+  refreshSetupDrivenSelects();
+  renderStats();
+  renderProgress();
+  renderLessons();
+  renderPlans();
+  renderLabSelect();
+  renderActiveLab();
+  renderStudentRegisterPreview();
+  renderLostTime();
+}
+
+document.getElementById("labDate").value=new Date().toISOString().slice(0,10);
+document.getElementById("lostDate").value=new Date().toISOString().slice(0,10);
+renderAll();
+</script>
+</body>
+</html>

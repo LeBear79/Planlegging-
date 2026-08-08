@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Læreroversikt v1.3</title>
+  <title>Læreroversikt v1.4</title>
   <meta name="theme-color" content="#1f4f46" />
   <style>
     :root{
@@ -45,7 +45,7 @@
     }
     main{max-width:1100px;margin:auto;padding:18px}
     .tabs{
-      display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin-bottom:18px;
+      display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:18px;
     }
     .tab-btn{
       border:0; border-radius:14px; padding:12px 10px; font-weight:700;
@@ -113,7 +113,7 @@
     .student-status button.active{background:var(--primary);color:#fff;border-color:var(--primary)}
     .student-notes{display:none;margin-top:10px}
     .student-card.open .student-notes{display:block}
-    .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+    .stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
     .stat{padding:14px;border-radius:14px;background:#f8faf9;border:1px solid var(--border)}
     .stat b{display:block;font-size:1.35rem}
     .empty{padding:18px;text-align:center;color:var(--muted)}
@@ -135,9 +135,9 @@
   <div class="topbar">
     <div class="brand">
       <h1>Læreroversikt</h1>
-      <small>Planlegging, progresjon og labb</small>
+      <small>Planlegging, progresjon og oversikt</small>
     </div>
-    <div class="version">v1.3</div>
+    <div class="version">v1.4</div>
   </div>
 </header>
 
@@ -145,7 +145,6 @@
   <div class="tabs">
     <button class="tab-btn active" data-tab="oversikt">Oversikt</button>
     <button class="tab-btn" data-tab="arsplan">Årsplan</button>
-    <button class="tab-btn" data-tab="labb">Labb</button>
     <button class="tab-btn" data-tab="mistet">Mistet tid</button>
     <button class="tab-btn" data-tab="oppsett">Oppsett</button>
   </div>
@@ -190,10 +189,9 @@
         <div class="stat-grid">
           <div class="stat"><span class="muted">Klasser registrert</span><b id="statClasses">0</b></div>
           <div class="stat"><span class="muted">Årsplanpunkter</span><b id="statPlans">0</b></div>
-          <div class="stat"><span class="muted">Labber</span><b id="statLabs">0</b></div>
           <div class="stat"><span class="muted">Mistet timer</span><b id="statLost">0</b></div>
         </div>
-        <p class="privacy">Data i denne versjonen lagres lokalt i nettleseren på enheten. Det sendes ikke noe til en server. Unngå likevel sensitive elevopplysninger før løsningen eventuelt er godkjent for bruk av arbeidsgiver.</p>
+        <p class="privacy">Data i denne versjonen lagres lokalt i nettleseren på enheten. Det sendes ikke noe til en server.</p>
       </div>
     </div>
 
@@ -248,58 +246,6 @@
     <div class="card" style="margin-top:14px">
       <h2>Årsplan</h2>
       <div id="planList"></div>
-    </div>
-  </section>
-
-  <section id="labb" class="panel">
-    <div class="grid two">
-      <div class="card">
-        <h2>Klasse og elever</h2>
-        <label>Klasse</label>
-        <select id="labClass" onchange="renderStudentRegisterPreview()"></select>
-        <div style="margin-top:10px">
-          <label>Elevnavn, ett navn per linje</label>
-          <p class="muted" style="margin:0 0 8px">Elevene får automatisk fast nummer i den rekkefølgen de registreres: Elev 1, Elev 2 osv.</p>
-          <textarea id="studentNames" placeholder="Ola Nordmann&#10;Kari Nordmann"></textarea>
-        </div>
-        <button class="primary" style="margin-top:10px" onclick="saveStudents()">Lagre elevliste</button>
-        <div id="studentRegisterPreview" style="margin-top:12px"></div>
-      </div>
-
-      <div class="card">
-        <h2>Opprett labb</h2>
-        <label>Klasse</label>
-        <select id="newLabClass"></select>
-        <div style="margin-top:10px">
-          <label>Navn på labb</label>
-          <input id="labName" placeholder="f.eks. Påvise stivelse i matvarer" />
-        </div>
-        <div style="margin-top:10px">
-          <label>Dato</label>
-          <input id="labDate" type="date" />
-        </div>
-        <button class="primary" style="margin-top:10px" onclick="createLab()">Opprett labb</button>
-      </div>
-    </div>
-
-    <div class="card" style="margin-top:14px">
-      <h2>Aktiv labb</h2>
-      <p class="muted">Navnet vises lokalt for deg. Elevnummeret kan senere brukes som KI-ID slik at navn ikke trenger å sendes til KI.</p>
-      <div class="row">
-        <div>
-          <label>Velg labb</label>
-          <select id="labSelect" onchange="renderActiveLab()"></select>
-        </div>
-        <div style="flex:0 0 auto">
-          <button class="small-btn danger" onclick="deleteActiveLab()">Slett labb</button>
-        </div>
-      </div>
-      <div id="activeLab"></div>
-    </div>
-
-    <div class="card" style="margin-top:14px">
-      <h2>Elevnummer og personvern</h2>
-      <p class="muted">Hver elev får et fast elevnummer. Ved en senere KI-funksjon kan appen bruke «Elev 1», «Elev 2» osv. i stedet for navn. Dette er pseudonymisering, men bruk av reelle elevdata må fortsatt følge skolens og kommunens regler.</p>
     </div>
   </section>
 
@@ -523,7 +469,7 @@ function fillSelect(id, values, placeholder="Velg..."){
 }
 function refreshSetupDrivenSelects(){
   const classes=setupClasses();
-  ["lessonClass","planClass","labClass","newLabClass","lostClass","setupSubjectClass","setupTopicClass"].forEach(id=>fillSelect(id,classes,"Velg klasse"));
+  ["lessonClass","planClass","lostClass","setupSubjectClass","setupTopicClass"].forEach(id=>fillSelect(id,classes,"Velg klasse"));
   const allSubjects=[...new Set(classes.flatMap(c=>subjectsFor(c)))].sort((a,b)=>a.localeCompare(b,"nb"));
   fillSelect("planSubject",allSubjects,"Velg fag");
   updateLessonSubjects();
@@ -827,7 +773,6 @@ function setStudentStatus(labId,index,status){
   if(!lab) return;
   lab.students[index].status=status;
   localStorage.setItem("laereroversikt_v1", JSON.stringify(data));
-  renderActiveLab();
 }
 
 function toggleTag(labId,index,tag){
@@ -837,7 +782,6 @@ function toggleTag(labId,index,tag){
   const pos=arr.indexOf(tag);
   if(pos>=0) arr.splice(pos,1); else arr.push(tag);
   localStorage.setItem("laereroversikt_v1", JSON.stringify(data));
-  renderActiveLab();
   setTimeout(()=>{
     const card=document.getElementById("student-"+index);
     if(card) card.classList.add("open");
@@ -941,7 +885,6 @@ function escapeAttr(str=""){ return escapeHtml(str); }
 function renderStats(){
   document.getElementById("statClasses").textContent=new Set(data.lessons.map(l=>l.cls)).size;
   document.getElementById("statPlans").textContent=data.plans.length;
-  document.getElementById("statLabs").textContent=data.labs.length;
   document.getElementById("statLost").textContent=formatHours(data.lost.reduce((s,x)=>s+Number(x.hours||0),0));
 }
 
@@ -951,13 +894,8 @@ function renderAll(){
   renderProgress();
   renderLessons();
   renderPlans();
-  renderLabSelect();
-  renderActiveLab();
-  renderStudentRegisterPreview();
   renderLostTime();
 }
-
-document.getElementById("labDate").value=new Date().toISOString().slice(0,10);
 document.getElementById("lostDate").value=new Date().toISOString().slice(0,10);
 renderAll();
 </script>

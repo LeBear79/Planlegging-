@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Læreroversikt v1.6</title>
+  <title>Læreroversikt v1.7</title>
   <meta name="theme-color" content="#1f4f46" />
   <style>
     :root{
@@ -149,7 +149,7 @@
       <h1>Læreroversikt</h1>
       <small>Planlegging, progresjon og oversikt</small>
     </div>
-    <div class="version">v1.6</div>
+    <div class="version">v1.7</div>
   </div>
 </header>
 
@@ -202,10 +202,6 @@
         <div style="margin-top:10px">
           <label>Hvor kom dere?</label>
           <input id="lessonReached" placeholder="f.eks. oppgave 3.14" />
-        </div>
-        <div style="margin-top:10px">
-          <label>Neste time</label>
-          <input id="lessonNext" placeholder="f.eks. Gjennomgå 3.14 og starte likninger" />
         </div>
         <div style="margin-top:10px">
           <label>Kort notat</label>
@@ -729,13 +725,12 @@ function saveLesson(){
     mainTopic, subTopic,
     topic:`${mainTopic} – ${subTopic}`,
     reached,
-    next: lessonNext.value.trim(),
     note: lessonNote.value.trim(),
     date: lessonDateValue,
     week: lessonWeek
   });
 
-  lessonReached.value=""; lessonNext.value=""; lessonNote.value="";
+  lessonReached.value=""; lessonNote.value="";
   persist();
 }
 

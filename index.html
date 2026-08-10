@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Læreroversikt v1.4</title>
+  <title>Læreroversikt v1.5</title>
   <meta name="theme-color" content="#1f4f46" />
   <style>
     :root{
@@ -117,6 +117,18 @@
     .stat{padding:14px;border-radius:14px;background:#f8faf9;border:1px solid var(--border)}
     .stat b{display:block;font-size:1.35rem}
     .empty{padding:18px;text-align:center;color:var(--muted)}
+
+    .plan-link-box{
+      margin-top:10px;padding:12px 14px;border:1px solid var(--border);
+      border-radius:12px;background:#f8faf9;
+    }
+    .plan-link-box strong{display:block;margin-bottom:3px}
+    .week-badge{
+      display:inline-flex;align-items:center;justify-content:center;
+      min-width:74px;padding:8px 11px;border-radius:12px;
+      background:#e7efec;font-weight:800;color:var(--primary);
+    }
+
     .privacy{
       font-size:.82rem;color:var(--muted);margin-top:14px;line-height:1.45
     }
@@ -137,7 +149,7 @@
       <h1>Læreroversikt</h1>
       <small>Planlegging, progresjon og oversikt</small>
     </div>
-    <div class="version">v1.4</div>
+    <div class="version">v1.5</div>
   </div>
 </header>
 
@@ -165,8 +177,22 @@
         </div>
         <div class="row" style="margin-top:10px">
           <div>
-            <label>Tema</label>
-            <select id="lessonTopic"></select>
+            <label>Dato</label>
+            <input id="lessonDate" type="date" onchange="updateLessonWeekAndPlan()" />
+          </div>
+          <div style="flex:0 0 130px">
+            <label>Ukenummer</label>
+            <div id="lessonWeekDisplay" class="week-badge">Uke –</div>
+          </div>
+        </div>
+        <div id="lessonPlanLink" class="plan-link-box">
+          <strong>Årsplan denne uken</strong>
+          <span class="muted">Velg klasse og fag.</span>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <div>
+            <label>Tema fra årsplan</label>
+            <select id="lessonTopic" onchange="renderLessonPlanLink()"></select>
           </div>
           <div>
             <label>Hvor kom dere?</label>
@@ -238,8 +264,8 @@
       </div>
 
       <div class="card">
-        <h2>Hvordan status beregnes</h2>
-        <p class="muted">v1.0 bruker en enkel sammenligning mellom aktuell kalenderuke og ukeintervallet i årsplanen. Senere kan dette gjøres mer presist med antall undervisningstimer per klasse.</p>
+        <h2>Kobling til enkelttimer</h2>
+        <p class="muted">Temaene du legger inn her brukes automatisk når du registrerer en undervisningstime. Appen ser på dato og ukenummer og viser hvilket tema som er planlagt for klassen akkurat den uka.</p>
       </div>
     </div>
 
@@ -450,6 +476,55 @@ function isoWeek(date=new Date()){
   return Math.ceil((((d-yearStart)/86400000)+1)/7);
 }
 
+function lessonDateObject(){
+  const value=document.getElementById("lessonDate")?.value;
+  return value ? new Date(value+"T12:00:00") : new Date();
+}
+
+function planEntriesFor(cls,subject){
+  return data.plans
+    .filter(p=>p.cls===cls && p.subject===subject)
+    .slice()
+    .sort((a,b)=>a.from-b.from);
+}
+
+function planForWeek(cls,subject,week){
+  return planEntriesFor(cls,subject).find(p=>week>=Number(p.from) && week<=Number(p.to));
+}
+
+function updateLessonWeekAndPlan(){
+  const week=isoWeek(lessonDateObject());
+  const display=document.getElementById("lessonWeekDisplay");
+  if(display) display.textContent=`Uke ${week}`;
+  updateLessonTopics();
+}
+
+function renderLessonPlanLink(){
+  const box=document.getElementById("lessonPlanLink");
+  if(!box) return;
+  const cls=document.getElementById("lessonClass")?.value||"";
+  const subject=document.getElementById("lessonSubject")?.value||"";
+  const topic=document.getElementById("lessonTopic")?.value||"";
+  const week=isoWeek(lessonDateObject());
+
+  if(!cls || !subject){
+    box.innerHTML='<strong>Årsplan denne uken</strong><span class="muted">Velg klasse og fag.</span>';
+    return;
+  }
+
+  const planned=planForWeek(cls,subject,week);
+  if(!planned){
+    box.innerHTML=`<strong>Uke ${week}: Ingen årsplan registrert</strong><span class="muted">Legg inn et årsplanpunkt for ${escapeHtml(cls)} · ${escapeHtml(subject)} for å koble timen til planen.</span>`;
+    return;
+  }
+
+  const period=planned.from===planned.to ? `uke ${planned.from}` : `uke ${planned.from}–${planned.to}`;
+  const match=topic===planned.topic;
+  box.innerHTML=`
+    <strong>Uke ${week}: ${escapeHtml(planned.topic)}</strong>
+    <span class="muted">Planlagt periode: ${period}.${topic ? (match ? " Valgt tema følger årsplanen." : " Du har valgt et annet årsplantema.") : ""}</span>`;
+}
+
 
 function setupClasses(){
   return Object.keys(data.setup.classes).sort((a,b)=>a.localeCompare(b,"nb"));
@@ -481,11 +556,36 @@ function updateLessonSubjects(){
   const cls=document.getElementById("lessonClass").value;
   fillSelect("lessonSubject",subjectsFor(cls),"Velg fag");
   updateLessonTopics();
+  renderLessonPlanLink();
 }
 function updateLessonTopics(){
   const cls=document.getElementById("lessonClass").value;
   const subject=document.getElementById("lessonSubject").value;
-  fillSelect("lessonTopic",topicsFor(cls,subject),"Velg tema");
+  const el=document.getElementById("lessonTopic");
+  if(!el) return;
+
+  const old=el.value;
+  const entries=planEntriesFor(cls,subject);
+  const week=isoWeek(lessonDateObject());
+
+  if(entries.length){
+    el.innerHTML='<option value="">Velg tema fra årsplan</option>' +
+      entries.map(p=>{
+        const period=p.from===p.to ? `Uke ${p.from}` : `Uke ${p.from}–${p.to}`;
+        const current=week>=Number(p.from) && week<=Number(p.to);
+        return `<option value="${escapeAttr(p.topic)}">${current ? "NÅ · " : ""}${period} · ${escapeHtml(p.topic)}</option>`;
+      }).join("");
+
+    const planned=planForWeek(cls,subject,week);
+    if(planned){
+      el.value=planned.topic;
+    } else if([...el.options].some(o=>o.value===old)){
+      el.value=old;
+    }
+  } else {
+    fillSelect("lessonTopic",topicsFor(cls,subject),"Velg tema");
+  }
+  renderLessonPlanLink();
 }
 function updateLostSubjects(){
   const cls=document.getElementById("lostClass").value;
@@ -579,13 +679,15 @@ function saveLesson(){
   const subject = lessonSubject.value;
   const topic = lessonTopic.value;
   const reached = lessonReached.value.trim();
-  if(!cls || !topic || !reached) return alert("Fyll inn klasse, tema og hvor dere kom.");
+  const lessonDateValue = document.getElementById("lessonDate").value || new Date().toISOString().slice(0,10);
+  const lessonWeek = isoWeek(new Date(lessonDateValue+"T12:00:00"));
+  if(!cls || !subject || !topic || !reached) return alert("Velg klasse, fag og tema, og fyll inn hvor dere kom.");
   data.lessons.unshift({
     id: Date.now(), cls, subject, topic, reached,
     next: lessonNext.value.trim(),
     note: lessonNote.value.trim(),
-    date: new Date().toISOString().slice(0,10),
-    week: isoWeek()
+    date: lessonDateValue,
+    week: lessonWeek
   });
   lessonReached.value=""; lessonNext.value=""; lessonNote.value="";
   persist();
@@ -597,8 +699,16 @@ function savePlan(){
   const from = Number(planFrom.value);
   const to = Number(planTo.value);
   const topic = planTopic.value.trim();
-  if(!cls || !topic || !from || !to) return alert("Fyll inn alle feltene.");
+  if(!cls || !subject || !topic || !from || !to) return alert("Fyll inn alle feltene.");
+  if(to < from) return alert("Til-uke kan ikke være før fra-uke.");
   data.plans.push({id:Date.now(),subject,cls,from,to,topic});
+
+  // Årsplantemaet blir samtidig tilgjengelig i klassens temaliste.
+  if(data.setup.classes[cls]?.subjects?.[subject]){
+    const arr=data.setup.classes[cls].subjects[subject];
+    if(!arr.includes(topic)) arr.push(topic);
+  }
+
   planTopic.value=""; planFrom.value=""; planTo.value="";
   persist();
 }
@@ -657,15 +767,15 @@ function createLab(){
 }
 
 function getPlanStatus(lesson){
-  const week = isoWeek();
-  const candidates = data.plans.filter(p =>
-    p.subject === lesson.subject &&
-    (p.cls.toLowerCase() === lesson.cls.toLowerCase() ||
-     p.cls.toLowerCase().includes(lesson.cls.toLowerCase().replace(/[a-zæøå]/gi,"").trim()))
-  );
-  const current = candidates.find(p=>week>=p.from && week<=p.to);
+  const week = Number(lesson.week || isoWeek(new Date(lesson.date+"T12:00:00")));
+  const current = planForWeek(lesson.cls, lesson.subject, week);
   if(!current) return {text:"Ingen plan", cls:"warn", planned:"–"};
-  return {text:"I rute?", cls:"good", planned:current.topic};
+  const match = current.topic === lesson.topic;
+  return {
+    text: match ? "I tråd med plan" : "Avvik fra plan",
+    cls: match ? "good" : "warn",
+    planned: current.topic
+  };
 }
 
 function renderProgress(){
@@ -680,7 +790,7 @@ function renderProgress(){
   container.innerHTML = items.map(l=>{
     const st=getPlanStatus(l);
     return `<div class="progress-item">
-      <div><strong>${escapeHtml(l.cls)} · ${escapeHtml(l.subject)}</strong><br><span class="muted">${escapeHtml(l.topic)}</span></div>
+      <div><strong>${escapeHtml(l.cls)} · ${escapeHtml(l.subject)}</strong><br><span class="muted">Uke ${l.week} · ${escapeHtml(l.topic)}</span></div>
       <div><span class="muted">Planlagt</span><br>${escapeHtml(st.planned)}</div>
       <div><span class="muted">Faktisk</span><br>${escapeHtml(l.reached)}</div>
       <span class="status ${st.cls}">${st.text}</span>
@@ -897,7 +1007,9 @@ function renderAll(){
   renderLostTime();
 }
 document.getElementById("lostDate").value=new Date().toISOString().slice(0,10);
+document.getElementById("lessonDate").value=new Date().toISOString().slice(0,10);
 renderAll();
+updateLessonWeekAndPlan();
 </script>
 </body>
 </html>

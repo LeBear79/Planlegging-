@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Læreroversikt v1.9</title>
+  <title>Læreroversikt v2.0</title>
   <meta name="theme-color" content="#1f4f46" />
   <style>
     :root{
@@ -129,6 +129,39 @@
       background:#e7efec;font-weight:800;color:var(--primary);
     }
 
+
+    .compact-info{
+      min-height:auto!important;
+      padding:14px 16px!important;
+      display:flex;
+      flex-direction:column;
+      gap:5px;
+    }
+    .edit-row{
+      display:grid;
+      grid-template-columns:110px 1fr auto auto;
+      gap:10px;
+      align-items:center;
+      border-bottom:1px solid var(--border);
+      padding:10px 0;
+    }
+    .print-only{display:none}
+    @media print{
+      body{background:#fff}
+      header,.tabs,.no-print,.compact-info{display:none!important}
+      main{max-width:none;padding:0}
+      .panel{display:none!important}
+      #arsplan{display:block!important}
+      #arsplan>.grid{display:none!important}
+      #arsplan>.card{box-shadow:none;border:0;padding:0}
+      .print-only{display:block!important}
+      #planList .edit-row{
+        grid-template-columns:120px 1fr;
+        break-inside:avoid;
+      }
+      #planList button{display:none!important}
+    }
+
     .privacy{
       font-size:.82rem;color:var(--muted);margin-top:14px;line-height:1.45
     }
@@ -149,7 +182,7 @@
       <h1>Læreroversikt</h1>
       <small>Planlegging, progresjon og oversikt</small>
     </div>
-    <div class="version">v1.9</div>
+    <div class="version">v2.0</div>
   </div>
 </header>
 
@@ -273,14 +306,20 @@
         <button class="primary" style="margin-top:10px" onclick="savePlan()">Legg til</button>
       </div>
 
-      <div class="card">
-        <h2>Kobling til enkelttimer</h2>
-        <p class="muted">Årsplanen lages på trinnnivå. Når du registrerer en undervisningstime, finner appen trinnet klassen tilhører og henter hovedtema og undertema fra årsplanen for dette trinnet og faget.</p>
+      <div class="card compact-info">
+        <strong>Kobling til enkelttimer</strong>
+        <span class="muted">Årsplanen lages på trinnnivå og brukes automatisk når du registrerer timer.</span>
       </div>
     </div>
 
     <div class="card" style="margin-top:14px">
-      <h2>Årsplan</h2>
+      <div class="row no-print" style="align-items:center;margin-bottom:8px">
+        <div><h2 style="margin:0">Årsplan</h2></div>
+        <div style="flex:0 0 auto">
+          <button class="primary" onclick="printAnnualPlan()">Lag PDF / skriv ut</button>
+        </div>
+      </div>
+      <h2 class="print-only">Årsplan</h2>
       <div id="planList"></div>
     </div>
   </section>
@@ -942,18 +981,66 @@ function renderPlans(){
   c.innerHTML=data.plans
     .slice()
     .sort((a,b)=>{
-      if((a.grade||"").localeCompare(b.grade||"","nb")!==0) return (a.grade||"").localeCompare(b.grade||"","nb");
-      if(a.subject!==b.subject) return a.subject.localeCompare(b.subject,"nb");
-      return a.from-b.from;
+      const g=(a.grade||"").localeCompare(b.grade||"","nb");
+      if(g!==0) return g;
+      const s=(a.subject||"").localeCompare(b.subject||"","nb");
+      if(s!==0) return s;
+      return Number(a.from)-Number(b.from);
     })
-    .map(p=>`<div class="plan-item">
+    .map(p=>`<div class="edit-row">
       <div><strong>Uke ${p.from}${p.to!==p.from?"–"+p.to:""}</strong></div>
       <div>
         <strong>${escapeHtml(p.grade || "Ukjent trinn")} · ${escapeHtml(p.subject)}</strong><br>
         <span class="muted">${escapeHtml(p.mainTopic)} → ${escapeHtml(p.subTopic)}</span>
       </div>
-      <button class="small-btn secondary" onclick="deletePlan(${p.id})">Slett</button>
+      <button class="small-btn secondary no-print" onclick="editPlan(${p.id})">Rediger</button>
+      <button class="small-btn secondary no-print" onclick="deletePlan(${p.id})">Slett</button>
     </div>`).join("");
+}
+
+function editPlan(id){
+  const p=data.plans.find(x=>x.id===id);
+  if(!p) return;
+
+  const grade=prompt("Trinn:", p.grade || "");
+  if(grade===null) return;
+  const subject=prompt("Fag:", p.subject || "");
+  if(subject===null) return;
+  const from=prompt("Fra uke:", p.from);
+  if(from===null) return;
+  const to=prompt("Til uke:", p.to);
+  if(to===null) return;
+  const mainTopic=prompt("Hovedtema:", p.mainTopic || "");
+  if(mainTopic===null) return;
+  const subTopic=prompt("Undertema:", p.subTopic || "");
+  if(subTopic===null) return;
+
+  const fromNum=Number(from);
+  const toNum=Number(to);
+
+  if(!grade.trim() || !subject.trim() || !mainTopic.trim() || !subTopic.trim() || !fromNum || !toNum){
+    alert("Alle feltene må fylles ut.");
+    return;
+  }
+  if(toNum < fromNum){
+    alert("Til-uke kan ikke være før fra-uke.");
+    return;
+  }
+
+  Object.assign(p,{
+    grade:grade.trim(),
+    subject:subject.trim(),
+    from:fromNum,
+    to:toNum,
+    mainTopic:mainTopic.trim(),
+    subTopic:subTopic.trim(),
+    topic:`${mainTopic.trim()} – ${subTopic.trim()}`
+  });
+  persist();
+}
+
+function printAnnualPlan(){
+  window.print();
 }
 
 function deletePlan(id){

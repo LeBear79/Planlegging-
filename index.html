@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Læreroversikt v1.7</title>
+  <title>Læreroversikt v1.9</title>
   <meta name="theme-color" content="#1f4f46" />
   <style>
     :root{
@@ -149,7 +149,7 @@
       <h1>Læreroversikt</h1>
       <small>Planlegging, progresjon og oversikt</small>
     </div>
-    <div class="version">v1.7</div>
+    <div class="version">v1.9</div>
   </div>
 </header>
 
@@ -165,6 +165,7 @@
     <div class="grid two">
       <div class="card">
         <h2>Registrer undervisningstime</h2>
+        <p class="muted">Velg først hovedtema. Undertema-listen viser deretter bare undertemaene som hører til dette hovedtemaet i årsplanen.</p>
         <div class="row">
           <div>
             <label>Klasse</label>
@@ -242,8 +243,13 @@
             <select id="planSubject"></select>
           </div>
           <div>
-            <label>Klasse</label>
-            <select id="planClass"></select>
+            <label>Trinn</label>
+            <select id="planGrade">
+              <option value="">Velg trinn</option>
+              <option>8. trinn</option>
+              <option>9. trinn</option>
+              <option>10. trinn</option>
+            </select>
           </div>
         </div>
         <div class="row" style="margin-top:10px">
@@ -269,7 +275,7 @@
 
       <div class="card">
         <h2>Kobling til enkelttimer</h2>
-        <p class="muted">Temaene du legger inn her brukes automatisk når du registrerer en undervisningstime. Appen ser på dato og ukenummer og viser hvilket tema som er planlagt for klassen akkurat den uka.</p>
+        <p class="muted">Årsplanen lages på trinnnivå. Når du registrerer en undervisningstime, finner appen trinnet klassen tilhører og henter hovedtema og undertema fra årsplanen for dette trinnet og faget.</p>
       </div>
     </div>
 
@@ -353,15 +359,27 @@
   <section id="oppsett" class="panel">
     <div class="card" style="margin-bottom:14px">
       <h2>Oppsett</h2>
-      <p class="muted">Gjør dette én gang først: registrer klasser, legg fag til hver klasse og legg deretter temaer til hvert fag. Etterpå brukes disse som rullegardinvalg i resten av appen.</p>
+      <p class="muted">Gjør dette én gang først: registrer klassene og koble hver klasse til riktig trinn. Legg deretter fag til klassene. Årsplanen opprettes separat på trinnnivå.</p>
     </div>
     <div class="grid two">
       <div class="card">
         <h2>1. Registrer klasser</h2>
-        <label>Ny klasse</label>
         <div class="row">
-          <div><input id="setupClassName" placeholder="f.eks. 8A" /></div>
-          <div style="flex:0 0 auto"><button class="primary" onclick="addSetupClass()">Legg til klasse</button></div>
+          <div>
+            <label>Ny klasse</label>
+            <input id="setupClassName" placeholder="f.eks. 9B" />
+          </div>
+          <div>
+            <label>Trinn</label>
+            <select id="setupClassGrade">
+              <option>8. trinn</option>
+              <option>9. trinn</option>
+              <option>10. trinn</option>
+            </select>
+          </div>
+          <div style="flex:0 0 auto">
+            <button class="primary" onclick="addSetupClass()">Legg til klasse</button>
+          </div>
         </div>
         <div id="setupClassList" style="margin-top:12px"></div>
       </div>
@@ -382,7 +400,7 @@
     </div>
 
     <div class="card" style="margin-top:14px">
-      <h2>3. Legg tema til fag</h2>
+      <h2>3. Temaer i oppsett (valgfritt)</h2>
       <div class="row">
         <div>
           <label>Klasse</label>
@@ -443,12 +461,24 @@ data.lost ||= [];
 data.setup ||= {classes:{}};
 data.setup.classes ||= {};
 
+data.setup.grades ||= ["8. trinn","9. trinn","10. trinn"];
+data.setup.classGrades ||= {};
+
+
 
 // Oppgrader eldre timeregistreringer.
 data.lessons = data.lessons.map(l => ({
   ...l,
   mainTopic: l.mainTopic || l.topic || "",
   subTopic: l.subTopic || ""
+}));
+
+// Oppgrader eldre årsplaner: behold klassefelt som legacy dersom trinn ikke finnes.
+data.plans = data.plans.map(p => ({
+  ...p,
+  grade: p.grade || "",
+  mainTopic: p.mainTopic || p.topic || "",
+  subTopic: p.subTopic || ""
 }));
 // Oppgrader årsplanpunkter fra eldre versjoner med ett tema-felt.
 data.plans = data.plans.map(p => ({
@@ -500,11 +530,20 @@ function lessonDateObject(){
   return value ? new Date(value+"T12:00:00") : new Date();
 }
 
-function planEntriesFor(cls,subject){
+function classGrade(cls){
+  return data.setup.classGrades?.[cls] || "";
+}
+
+function planEntriesForGrade(grade,subject){
   return data.plans
-    .filter(p=>p.cls===cls && p.subject===subject)
+    .filter(p=>p.grade===grade && p.subject===subject)
     .slice()
     .sort((a,b)=>a.from-b.from);
+}
+
+function planEntriesFor(cls,subject){
+  const grade=classGrade(cls);
+  return planEntriesForGrade(grade,subject);
 }
 
 function planForWeek(cls,subject,week){
@@ -525,50 +564,60 @@ function updateLessonSubTopics(){
   const subEl=document.getElementById("lessonSubTopic");
   if(!subEl) return;
 
-  const entries=planEntriesFor(cls,subject).filter(p=>p.mainTopic===main);
+  const entries=planEntriesFor(cls,subject).filter(p => (p.mainTopic || p.topic || "") === main);
   const week=isoWeek(lessonDateObject());
   const old=subEl.value;
 
   subEl.innerHTML='<option value="">Velg undertema</option>' +
     entries.map(p=>{
+      const sub = p.subTopic || "";
       const period=p.from===p.to ? `Uke ${p.from}` : `Uke ${p.from}–${p.to}`;
       const current=week>=Number(p.from) && week<=Number(p.to);
-      return `<option value="${escapeAttr(p.subTopic)}">${current?"NÅ · ":""}${period} · ${escapeHtml(p.subTopic)}</option>`;
+      return `<option value="${escapeAttr(sub)}">${current?"NÅ · ":""}${period} · ${escapeHtml(sub)}</option>`;
     }).join("");
 
   const planned=planForWeek(cls,subject,week);
-  if(planned?.mainTopic===main && planned?.subTopic){
+  if(planned && (planned.mainTopic || planned.topic || "")===main && planned.subTopic){
     subEl.value=planned.subTopic;
   } else if([...subEl.options].some(o=>o.value===old)){
     subEl.value=old;
   }
+
   renderLessonPlanLink();
 }
 
 function renderLessonPlanLink(){
   const box=document.getElementById("lessonPlanLink");
   if(!box) return;
+
   const cls=document.getElementById("lessonClass")?.value||"";
   const subject=document.getElementById("lessonSubject")?.value||"";
   const main=document.getElementById("lessonMainTopic")?.value||"";
   const sub=document.getElementById("lessonSubTopic")?.value||"";
   const week=isoWeek(lessonDateObject());
+  const grade=classGrade(cls);
 
   if(!cls || !subject){
     box.innerHTML='<strong>Planlagt denne uken</strong><span class="muted">Velg klasse og fag.</span>';
     return;
   }
 
+  if(!grade){
+    box.innerHTML=`<strong>Klassen mangler trinn</strong><span class="muted">Gå til Oppsett og koble ${escapeHtml(cls)} til et trinn.</span>`;
+    return;
+  }
+
   const planned=planForWeek(cls,subject,week);
   if(!planned){
-    box.innerHTML=`<strong>Uke ${week}: Ingen årsplan registrert</strong><span class="muted">Legg inn et årsplanpunkt for ${escapeHtml(cls)} · ${escapeHtml(subject)}.</span>`;
+    box.innerHTML=`<strong>Uke ${week}: Ingen årsplan registrert</strong><span class="muted">${escapeHtml(cls)} tilhører ${escapeHtml(grade)}. Legg inn årsplan for ${escapeHtml(grade)} · ${escapeHtml(subject)}.</span>`;
     return;
   }
 
   const period=planned.from===planned.to ? `uke ${planned.from}` : `uke ${planned.from}–${planned.to}`;
   const match=main===planned.mainTopic && sub===planned.subTopic;
+
   box.innerHTML=`
-    <strong>Uke ${week}: ${escapeHtml(planned.mainTopic)} → ${escapeHtml(planned.subTopic)}</strong>
+    <strong>${escapeHtml(grade)} · uke ${week}: ${escapeHtml(planned.mainTopic)} → ${escapeHtml(planned.subTopic)}</strong>
     <span class="muted">Planlagt periode: ${period}.${main && sub ? (match ? " Valget følger årsplanen." : " Du har valgt et annet tema enn planen for denne uka.") : ""}</span>`;
 }
 
@@ -591,7 +640,7 @@ function fillSelect(id, values, placeholder="Velg..."){
 }
 function refreshSetupDrivenSelects(){
   const classes=setupClasses();
-  ["lessonClass","planClass","lostClass","setupSubjectClass","setupTopicClass"].forEach(id=>fillSelect(id,classes,"Velg klasse"));
+  ["lessonClass","lostClass","setupSubjectClass","setupTopicClass"].forEach(id=>fillSelect(id,classes,"Velg klasse"));
   const allSubjects=[...new Set(classes.flatMap(c=>subjectsFor(c)))].sort((a,b)=>a.localeCompare(b,"nb"));
   fillSelect("planSubject",allSubjects,"Velg fag");
   updateLessonSubjects();
@@ -613,13 +662,15 @@ function updateLessonTopics(){
 
   const entries=planEntriesFor(cls,subject);
   const week=isoWeek(lessonDateObject());
-  const mains=[...new Set(entries.map(p=>p.mainTopic).filter(Boolean))];
+  const mains=[...new Set(entries.map(p=>p.mainTopic || p.topic || "").filter(Boolean))];
 
   mainEl.innerHTML='<option value="">Velg hovedtema</option>' +
     mains.map(t=>`<option value="${escapeAttr(t)}">${escapeHtml(t)}</option>`).join("");
 
   const planned=planForWeek(cls,subject,week);
-  if(planned?.mainTopic) mainEl.value=planned.mainTopic;
+  if(planned){
+    mainEl.value=planned.mainTopic || planned.topic || "";
+  }
 
   updateLessonSubTopics();
 }
@@ -634,14 +685,17 @@ function updateSetupTopicSubjects(){
 }
 function addSetupClass(){
   const name=document.getElementById("setupClassName").value.trim();
-  if(!name) return alert("Skriv inn navn på klassen.");
+  const grade=document.getElementById("setupClassGrade").value;
+  if(!name || !grade) return alert("Skriv inn klasse og velg trinn.");
   if(!data.setup.classes[name]) data.setup.classes[name]={subjects:{}};
+  data.setup.classGrades[name]=grade;
   document.getElementById("setupClassName").value="";
   persist();
 }
 function deleteSetupClass(name){
   if(!confirm(`Slette klassen ${name} fra oppsettet?`)) return;
   delete data.setup.classes[name];
+  delete data.setup.classGrades[name];
   persist();
 }
 function addSetupSubject(){
@@ -679,11 +733,12 @@ function renderSetupLists(){
   if(classList){
     classList.innerHTML=classes.length?classes.map(c=>`
       <div class="plan-item">
-        <div><strong>${escapeHtml(c)}</strong></div>
+        <div><strong>${escapeHtml(c)}</strong><br><span class="muted">${escapeHtml(data.setup.classGrades[c] || "Trinn ikke valgt")}</span></div>
         <div class="muted">${subjectsFor(c).length} fag</div>
         <button class="small-btn secondary" onclick="deleteSetupClass('${c.replace(/'/g,"\\'")}')">Slett</button>
       </div>`).join(""):'<div class="empty">Ingen klasser registrert ennå.</div>';
   }
+
   const selectedClass=document.getElementById("setupSubjectClass")?.value;
   const subjectList=document.getElementById("setupSubjectList");
   if(subjectList){
@@ -718,47 +773,57 @@ function saveLesson(){
   const reached = lessonReached.value.trim();
   const lessonDateValue = document.getElementById("lessonDate").value || new Date().toISOString().slice(0,10);
   const lessonWeek = isoWeek(new Date(lessonDateValue+"T12:00:00"));
-  if(!cls || !subject || !mainTopic || !subTopic || !reached) return alert("Velg klasse, fag, hovedtema og undertema, og fyll inn hvor dere kom.");
+
+  if(!cls || !subject || !mainTopic || !subTopic || !reached){
+    return alert("Velg klasse, fag, hovedtema og undertema, og fyll inn hvor dere kom.");
+  }
 
   data.lessons.unshift({
-    id: Date.now(), cls, subject,
-    mainTopic, subTopic,
+    id:Date.now(),
+    cls,
+    subject,
+    mainTopic,
+    subTopic,
     topic:`${mainTopic} – ${subTopic}`,
     reached,
-    note: lessonNote.value.trim(),
-    date: lessonDateValue,
-    week: lessonWeek
+    note:lessonNote.value.trim(),
+    date:lessonDateValue,
+    week:lessonWeek
   });
 
-  lessonReached.value=""; lessonNote.value="";
+  lessonReached.value="";
+  lessonNote.value="";
   persist();
 }
 
 function savePlan(){
   const subject = planSubject.value;
-  const cls = planClass.value;
+  const grade = document.getElementById("planGrade").value;
   const from = Number(planFrom.value);
   const to = Number(planTo.value);
   const mainTopic = document.getElementById("planMainTopic").value.trim();
   const subTopic = document.getElementById("planSubTopic").value.trim();
-  if(!cls || !subject || !mainTopic || !subTopic || !from || !to) return alert("Fyll inn alle feltene.");
+
+  if(!grade || !subject || !mainTopic || !subTopic || !from || !to){
+    return alert("Fyll inn alle feltene.");
+  }
   if(to < from) return alert("Til-uke kan ikke være før fra-uke.");
 
   data.plans.push({
-    id:Date.now(), subject, cls, from, to,
-    mainTopic, subTopic,
+    id:Date.now(),
+    subject,
+    grade,
+    from,
+    to,
+    mainTopic,
+    subTopic,
     topic:`${mainTopic} – ${subTopic}`
   });
 
-  // Hovedtema beholdes også i det generelle oppsettet.
-  if(data.setup.classes[cls]?.subjects?.[subject]){
-    const arr=data.setup.classes[cls].subjects[subject];
-    if(!arr.includes(mainTopic)) arr.push(mainTopic);
-  }
-
   document.getElementById("planMainTopic").value="";
   document.getElementById("planSubTopic").value="";
-  planFrom.value=""; planTo.value="";
+  planFrom.value="";
+  planTo.value="";
   persist();
 }
 
@@ -817,7 +882,10 @@ function createLab(){
 
 function getPlanStatus(lesson){
   const week = Number(lesson.week || isoWeek(new Date(lesson.date+"T12:00:00")));
+  const grade = classGrade(lesson.cls);
   const current = planForWeek(lesson.cls, lesson.subject, week);
+
+  if(!grade) return {text:"Mangler trinn", cls:"warn", planned:"–"};
   if(!current) return {text:"Ingen plan", cls:"warn", planned:"–"};
 
   const mainMatch=current.mainTopic===lesson.mainTopic;
@@ -843,7 +911,7 @@ function renderProgress(){
   container.innerHTML = items.map(l=>{
     const st=getPlanStatus(l);
     return `<div class="progress-item">
-      <div><strong>${escapeHtml(l.cls)} · ${escapeHtml(l.subject)}</strong><br><span class="muted">Uke ${l.week} · ${escapeHtml(l.mainTopic || l.topic)}${l.subTopic ? " → "+escapeHtml(l.subTopic) : ""}</span></div>
+      <div><strong>${escapeHtml(l.cls)} · ${escapeHtml(l.subject)}</strong><br><span class="muted">${escapeHtml(classGrade(l.cls))} · Uke ${l.week} · ${escapeHtml(l.mainTopic || l.topic)}${l.subTopic ? " → "+escapeHtml(l.subTopic) : ""}</span></div>
       <div><span class="muted">Planlagt</span><br>${escapeHtml(st.planned)}</div>
       <div><span class="muted">Faktisk</span><br>${escapeHtml(l.reached)}</div>
       <span class="status ${st.cls}">${st.text}</span>
@@ -866,12 +934,24 @@ function renderLessons(){
 
 function renderPlans(){
   const c=document.getElementById("planList");
-  if(!data.plans.length){c.innerHTML='<div class="empty">Ingen årsplanpunkter registrert ennå.</div>';return;}
+  if(!data.plans.length){
+    c.innerHTML='<div class="empty">Ingen årsplanpunkter registrert ennå.</div>';
+    return;
+  }
+
   c.innerHTML=data.plans
-    .sort((a,b)=>a.from-b.from)
+    .slice()
+    .sort((a,b)=>{
+      if((a.grade||"").localeCompare(b.grade||"","nb")!==0) return (a.grade||"").localeCompare(b.grade||"","nb");
+      if(a.subject!==b.subject) return a.subject.localeCompare(b.subject,"nb");
+      return a.from-b.from;
+    })
     .map(p=>`<div class="plan-item">
       <div><strong>Uke ${p.from}${p.to!==p.from?"–"+p.to:""}</strong></div>
-      <div><strong>${escapeHtml(p.subject)} · ${escapeHtml(p.cls)}</strong><br><span class="muted">${escapeHtml(p.mainTopic)} → ${escapeHtml(p.subTopic)}</span></div>
+      <div>
+        <strong>${escapeHtml(p.grade || "Ukjent trinn")} · ${escapeHtml(p.subject)}</strong><br>
+        <span class="muted">${escapeHtml(p.mainTopic)} → ${escapeHtml(p.subTopic)}</span>
+      </div>
       <button class="small-btn secondary" onclick="deletePlan(${p.id})">Slett</button>
     </div>`).join("");
 }

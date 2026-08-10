@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Læreroversikt v1.5</title>
+  <title>Læreroversikt v1.6</title>
   <meta name="theme-color" content="#1f4f46" />
   <style>
     :root{
@@ -149,7 +149,7 @@
       <h1>Læreroversikt</h1>
       <small>Planlegging, progresjon og oversikt</small>
     </div>
-    <div class="version">v1.5</div>
+    <div class="version">v1.6</div>
   </div>
 </header>
 
@@ -186,18 +186,22 @@
           </div>
         </div>
         <div id="lessonPlanLink" class="plan-link-box">
-          <strong>Årsplan denne uken</strong>
+          <strong>Planlagt denne uken</strong>
           <span class="muted">Velg klasse og fag.</span>
         </div>
         <div class="row" style="margin-top:10px">
           <div>
-            <label>Tema fra årsplan</label>
-            <select id="lessonTopic" onchange="renderLessonPlanLink()"></select>
+            <label>Hovedtema</label>
+            <select id="lessonMainTopic" onchange="updateLessonSubTopics()"></select>
           </div>
           <div>
-            <label>Hvor kom dere?</label>
-            <input id="lessonReached" placeholder="f.eks. oppgave 3.14" />
+            <label>Undertema</label>
+            <select id="lessonSubTopic" onchange="renderLessonPlanLink()"></select>
           </div>
+        </div>
+        <div style="margin-top:10px">
+          <label>Hvor kom dere?</label>
+          <input id="lessonReached" placeholder="f.eks. oppgave 3.14" />
         </div>
         <div style="margin-top:10px">
           <label>Neste time</label>
@@ -257,8 +261,12 @@
           </div>
         </div>
         <div style="margin-top:10px">
-          <label>Tema</label>
-          <input id="planTopic" placeholder="f.eks. Algebra og likninger" />
+          <label>Hovedtema</label>
+          <input id="planMainTopic" placeholder="f.eks. Algebra" />
+          <div style="margin-top:10px">
+            <label>Undertema</label>
+            <input id="planSubTopic" placeholder="f.eks. Trekke sammen uttrykk" />
+          </div>
         </div>
         <button class="primary" style="margin-top:10px" onclick="savePlan()">Legg til</button>
       </div>
@@ -439,6 +447,21 @@ data.lost ||= [];
 data.setup ||= {classes:{}};
 data.setup.classes ||= {};
 
+
+// Oppgrader eldre timeregistreringer.
+data.lessons = data.lessons.map(l => ({
+  ...l,
+  mainTopic: l.mainTopic || l.topic || "",
+  subTopic: l.subTopic || ""
+}));
+// Oppgrader årsplanpunkter fra eldre versjoner med ett tema-felt.
+data.plans = data.plans.map(p => ({
+  ...p,
+  mainTopic: p.mainTopic || p.topic || "",
+  subTopic: p.subTopic || ""
+}));
+
+
 for (const cls of Object.keys(data.classes)) {
   const val = data.classes[cls];
   if (Array.isArray(val)) {
@@ -499,30 +522,58 @@ function updateLessonWeekAndPlan(){
   updateLessonTopics();
 }
 
+function updateLessonSubTopics(){
+  const cls=document.getElementById("lessonClass")?.value||"";
+  const subject=document.getElementById("lessonSubject")?.value||"";
+  const main=document.getElementById("lessonMainTopic")?.value||"";
+  const subEl=document.getElementById("lessonSubTopic");
+  if(!subEl) return;
+
+  const entries=planEntriesFor(cls,subject).filter(p=>p.mainTopic===main);
+  const week=isoWeek(lessonDateObject());
+  const old=subEl.value;
+
+  subEl.innerHTML='<option value="">Velg undertema</option>' +
+    entries.map(p=>{
+      const period=p.from===p.to ? `Uke ${p.from}` : `Uke ${p.from}–${p.to}`;
+      const current=week>=Number(p.from) && week<=Number(p.to);
+      return `<option value="${escapeAttr(p.subTopic)}">${current?"NÅ · ":""}${period} · ${escapeHtml(p.subTopic)}</option>`;
+    }).join("");
+
+  const planned=planForWeek(cls,subject,week);
+  if(planned?.mainTopic===main && planned?.subTopic){
+    subEl.value=planned.subTopic;
+  } else if([...subEl.options].some(o=>o.value===old)){
+    subEl.value=old;
+  }
+  renderLessonPlanLink();
+}
+
 function renderLessonPlanLink(){
   const box=document.getElementById("lessonPlanLink");
   if(!box) return;
   const cls=document.getElementById("lessonClass")?.value||"";
   const subject=document.getElementById("lessonSubject")?.value||"";
-  const topic=document.getElementById("lessonTopic")?.value||"";
+  const main=document.getElementById("lessonMainTopic")?.value||"";
+  const sub=document.getElementById("lessonSubTopic")?.value||"";
   const week=isoWeek(lessonDateObject());
 
   if(!cls || !subject){
-    box.innerHTML='<strong>Årsplan denne uken</strong><span class="muted">Velg klasse og fag.</span>';
+    box.innerHTML='<strong>Planlagt denne uken</strong><span class="muted">Velg klasse og fag.</span>';
     return;
   }
 
   const planned=planForWeek(cls,subject,week);
   if(!planned){
-    box.innerHTML=`<strong>Uke ${week}: Ingen årsplan registrert</strong><span class="muted">Legg inn et årsplanpunkt for ${escapeHtml(cls)} · ${escapeHtml(subject)} for å koble timen til planen.</span>`;
+    box.innerHTML=`<strong>Uke ${week}: Ingen årsplan registrert</strong><span class="muted">Legg inn et årsplanpunkt for ${escapeHtml(cls)} · ${escapeHtml(subject)}.</span>`;
     return;
   }
 
   const period=planned.from===planned.to ? `uke ${planned.from}` : `uke ${planned.from}–${planned.to}`;
-  const match=topic===planned.topic;
+  const match=main===planned.mainTopic && sub===planned.subTopic;
   box.innerHTML=`
-    <strong>Uke ${week}: ${escapeHtml(planned.topic)}</strong>
-    <span class="muted">Planlagt periode: ${period}.${topic ? (match ? " Valgt tema følger årsplanen." : " Du har valgt et annet årsplantema.") : ""}</span>`;
+    <strong>Uke ${week}: ${escapeHtml(planned.mainTopic)} → ${escapeHtml(planned.subTopic)}</strong>
+    <span class="muted">Planlagt periode: ${period}.${main && sub ? (match ? " Valget følger årsplanen." : " Du har valgt et annet tema enn planen for denne uka.") : ""}</span>`;
 }
 
 
@@ -561,31 +612,20 @@ function updateLessonSubjects(){
 function updateLessonTopics(){
   const cls=document.getElementById("lessonClass").value;
   const subject=document.getElementById("lessonSubject").value;
-  const el=document.getElementById("lessonTopic");
-  if(!el) return;
+  const mainEl=document.getElementById("lessonMainTopic");
+  if(!mainEl) return;
 
-  const old=el.value;
   const entries=planEntriesFor(cls,subject);
   const week=isoWeek(lessonDateObject());
+  const mains=[...new Set(entries.map(p=>p.mainTopic).filter(Boolean))];
 
-  if(entries.length){
-    el.innerHTML='<option value="">Velg tema fra årsplan</option>' +
-      entries.map(p=>{
-        const period=p.from===p.to ? `Uke ${p.from}` : `Uke ${p.from}–${p.to}`;
-        const current=week>=Number(p.from) && week<=Number(p.to);
-        return `<option value="${escapeAttr(p.topic)}">${current ? "NÅ · " : ""}${period} · ${escapeHtml(p.topic)}</option>`;
-      }).join("");
+  mainEl.innerHTML='<option value="">Velg hovedtema</option>' +
+    mains.map(t=>`<option value="${escapeAttr(t)}">${escapeHtml(t)}</option>`).join("");
 
-    const planned=planForWeek(cls,subject,week);
-    if(planned){
-      el.value=planned.topic;
-    } else if([...el.options].some(o=>o.value===old)){
-      el.value=old;
-    }
-  } else {
-    fillSelect("lessonTopic",topicsFor(cls,subject),"Velg tema");
-  }
-  renderLessonPlanLink();
+  const planned=planForWeek(cls,subject,week);
+  if(planned?.mainTopic) mainEl.value=planned.mainTopic;
+
+  updateLessonSubTopics();
 }
 function updateLostSubjects(){
   const cls=document.getElementById("lostClass").value;
@@ -677,18 +717,24 @@ function renderSetupTopicList(){
 function saveLesson(){
   const cls = lessonClass.value;
   const subject = lessonSubject.value;
-  const topic = lessonTopic.value;
+  const mainTopic = document.getElementById("lessonMainTopic").value;
+  const subTopic = document.getElementById("lessonSubTopic").value;
   const reached = lessonReached.value.trim();
   const lessonDateValue = document.getElementById("lessonDate").value || new Date().toISOString().slice(0,10);
   const lessonWeek = isoWeek(new Date(lessonDateValue+"T12:00:00"));
-  if(!cls || !subject || !topic || !reached) return alert("Velg klasse, fag og tema, og fyll inn hvor dere kom.");
+  if(!cls || !subject || !mainTopic || !subTopic || !reached) return alert("Velg klasse, fag, hovedtema og undertema, og fyll inn hvor dere kom.");
+
   data.lessons.unshift({
-    id: Date.now(), cls, subject, topic, reached,
+    id: Date.now(), cls, subject,
+    mainTopic, subTopic,
+    topic:`${mainTopic} – ${subTopic}`,
+    reached,
     next: lessonNext.value.trim(),
     note: lessonNote.value.trim(),
     date: lessonDateValue,
     week: lessonWeek
   });
+
   lessonReached.value=""; lessonNext.value=""; lessonNote.value="";
   persist();
 }
@@ -698,18 +744,26 @@ function savePlan(){
   const cls = planClass.value;
   const from = Number(planFrom.value);
   const to = Number(planTo.value);
-  const topic = planTopic.value.trim();
-  if(!cls || !subject || !topic || !from || !to) return alert("Fyll inn alle feltene.");
+  const mainTopic = document.getElementById("planMainTopic").value.trim();
+  const subTopic = document.getElementById("planSubTopic").value.trim();
+  if(!cls || !subject || !mainTopic || !subTopic || !from || !to) return alert("Fyll inn alle feltene.");
   if(to < from) return alert("Til-uke kan ikke være før fra-uke.");
-  data.plans.push({id:Date.now(),subject,cls,from,to,topic});
 
-  // Årsplantemaet blir samtidig tilgjengelig i klassens temaliste.
+  data.plans.push({
+    id:Date.now(), subject, cls, from, to,
+    mainTopic, subTopic,
+    topic:`${mainTopic} – ${subTopic}`
+  });
+
+  // Hovedtema beholdes også i det generelle oppsettet.
   if(data.setup.classes[cls]?.subjects?.[subject]){
     const arr=data.setup.classes[cls].subjects[subject];
-    if(!arr.includes(topic)) arr.push(topic);
+    if(!arr.includes(mainTopic)) arr.push(mainTopic);
   }
 
-  planTopic.value=""; planFrom.value=""; planTo.value="";
+  document.getElementById("planMainTopic").value="";
+  document.getElementById("planSubTopic").value="";
+  planFrom.value=""; planTo.value="";
   persist();
 }
 
@@ -770,11 +824,15 @@ function getPlanStatus(lesson){
   const week = Number(lesson.week || isoWeek(new Date(lesson.date+"T12:00:00")));
   const current = planForWeek(lesson.cls, lesson.subject, week);
   if(!current) return {text:"Ingen plan", cls:"warn", planned:"–"};
-  const match = current.topic === lesson.topic;
+
+  const mainMatch=current.mainTopic===lesson.mainTopic;
+  const subMatch=current.subTopic===lesson.subTopic;
+  const match=mainMatch && subMatch;
+
   return {
-    text: match ? "I tråd med plan" : "Avvik fra plan",
+    text: match ? "I tråd med plan" : (mainMatch ? "Samme hovedtema" : "Avvik fra plan"),
     cls: match ? "good" : "warn",
-    planned: current.topic
+    planned:`${current.mainTopic} → ${current.subTopic}`
   };
 }
 
@@ -790,7 +848,7 @@ function renderProgress(){
   container.innerHTML = items.map(l=>{
     const st=getPlanStatus(l);
     return `<div class="progress-item">
-      <div><strong>${escapeHtml(l.cls)} · ${escapeHtml(l.subject)}</strong><br><span class="muted">Uke ${l.week} · ${escapeHtml(l.topic)}</span></div>
+      <div><strong>${escapeHtml(l.cls)} · ${escapeHtml(l.subject)}</strong><br><span class="muted">Uke ${l.week} · ${escapeHtml(l.mainTopic || l.topic)}${l.subTopic ? " → "+escapeHtml(l.subTopic) : ""}</span></div>
       <div><span class="muted">Planlagt</span><br>${escapeHtml(st.planned)}</div>
       <div><span class="muted">Faktisk</span><br>${escapeHtml(l.reached)}</div>
       <span class="status ${st.cls}">${st.text}</span>
@@ -818,7 +876,7 @@ function renderPlans(){
     .sort((a,b)=>a.from-b.from)
     .map(p=>`<div class="plan-item">
       <div><strong>Uke ${p.from}${p.to!==p.from?"–"+p.to:""}</strong></div>
-      <div><strong>${escapeHtml(p.subject)} · ${escapeHtml(p.cls)}</strong><br><span class="muted">${escapeHtml(p.topic)}</span></div>
+      <div><strong>${escapeHtml(p.subject)} · ${escapeHtml(p.cls)}</strong><br><span class="muted">${escapeHtml(p.mainTopic)} → ${escapeHtml(p.subTopic)}</span></div>
       <button class="small-btn secondary" onclick="deletePlan(${p.id})">Slett</button>
     </div>`).join("");
 }

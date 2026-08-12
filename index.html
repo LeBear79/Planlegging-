@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Læreroversikt v2.8</title>
+  <title>Læreroversikt v2.9</title>
   <meta name="theme-color" content="#245b50" />
   <style>
     :root{
@@ -114,7 +114,7 @@
       <h1>Læreroversikt</h1>
       <div class="subtitle">Planlegging, progresjon og oversikt</div>
     </div>
-    <div class="version">v2.8</div>
+    <div class="version">v2.9</div>
   </div>
 </header>
 
@@ -660,14 +660,128 @@ function renderTopics(){
   const box=document.getElementById("topicList");
   const groups=gradeTopics(grade,subject);
   const mains=Object.keys(groups).sort((a,b)=>a.localeCompare(b,"nb"));
-  if(!grade||!subject){box.innerHTML='<div class="empty">Velg trinn og fag.</div>';return}
-  if(!mains.length){box.innerHTML='<div class="empty">Ingen temaer registrert.</div>';return}
+
+  if(!grade||!subject){
+    box.innerHTML='<div class="empty">Velg trinn og fag.</div>';
+    return;
+  }
+  if(!mains.length){
+    box.innerHTML='<div class="empty">Ingen temaer registrert.</div>';
+    return;
+  }
+
   box.innerHTML=mains.map(main=>`
-    <div style="padding:10px 0;border-bottom:1px solid var(--border)">
-      <strong>${esc(main)}</strong><br>
-      ${(groups[main]||[]).map(sub=>`<span class="pill">${esc(sub)}</span>`).join("")}
+    <div style="padding:12px 0;border-bottom:1px solid var(--border)">
+      <div style="display:flex;gap:8px;justify-content:space-between;align-items:center;flex-wrap:wrap">
+        <strong>${esc(main)}</strong>
+        <div style="display:flex;gap:6px">
+          <button class="secondary" onclick="editMainTopic('${main.replace(/'/g,"\\'")}')">Rediger</button>
+          <button class="danger" onclick="removeMainTopic('${main.replace(/'/g,"\\'")}')">Slett hovedtema</button>
+        </div>
+      </div>
+      <div style="margin-top:6px">
+        ${(groups[main]||[]).length
+          ? (groups[main]||[]).map(sub=>`
+            <span class="pill">
+              ${esc(sub)}
+              <button title="Rediger" style="border:0;background:none;cursor:pointer;font-weight:800" onclick="editSubTopic('${main.replace(/'/g,"\\'")}','${sub.replace(/'/g,"\\'")}')">Rediger</button>
+              <button title="Slett" style="border:0;background:none;cursor:pointer;font-weight:800" onclick="removeSubTopic('${main.replace(/'/g,"\\'")}','${sub.replace(/'/g,"\\'")}')">×</button>
+            </span>`).join("")
+          : '<span class="muted">Ingen undertema registrert.</span>'}
+      </div>
     </div>`).join("");
 }
+
+
+window.removeSubTopic=function(main,sub){
+  const grade=document.getElementById("setupGrade").value;
+  const subject=document.getElementById("setupSubject").value;
+  const arr=data.setup.gradeTopics?.[grade]?.[subject]?.[main];
+  if(!arr) return;
+  if(!confirm(`Slette undertemaet "${sub}"?`)) return;
+  data.setup.gradeTopics[grade][subject][main]=arr.filter(x=>x!==sub);
+  saveData();
+  renderAll();
+  document.getElementById("setupGrade").value=grade;
+  updateSetupSubjects();
+  document.getElementById("setupSubject").value=subject;
+  renderTopics();
+};
+
+window.removeMainTopic=function(main){
+  const grade=document.getElementById("setupGrade").value;
+  const subject=document.getElementById("setupSubject").value;
+  const groups=data.setup.gradeTopics?.[grade]?.[subject];
+  if(!groups?.[main]) return;
+  if(!confirm(`Slette hovedtemaet "${main}" og alle undertemaene under?`)) return;
+  delete data.setup.gradeTopics[grade][subject][main];
+  saveData();
+  renderAll();
+  document.getElementById("setupGrade").value=grade;
+  updateSetupSubjects();
+  document.getElementById("setupSubject").value=subject;
+  renderTopics();
+};
+
+window.editSubTopic=function(main,sub){
+  const grade=document.getElementById("setupGrade").value;
+  const subject=document.getElementById("setupSubject").value;
+  const arr=data.setup.gradeTopics?.[grade]?.[subject]?.[main];
+  if(!arr) return;
+
+  const updated=prompt("Rediger undertema:",sub);
+  if(updated===null) return;
+  const value=updated.trim();
+  if(!value) return alert("Undertema kan ikke være tomt.");
+  if(arr.includes(value) && value!==sub) return alert("Dette undertemaet finnes allerede.");
+
+  const idx=arr.indexOf(sub);
+  if(idx<0) return;
+  arr[idx]=value;
+
+  data.plans.forEach(p=>{
+    if(p.grade===grade && p.subject===subject && p.mainTopic===main && p.subTopic===sub){
+      p.subTopic=value;
+    }
+  });
+
+  saveData();
+  renderAll();
+  document.getElementById("setupGrade").value=grade;
+  updateSetupSubjects();
+  document.getElementById("setupSubject").value=subject;
+  renderTopics();
+};
+
+window.editMainTopic=function(main){
+  const grade=document.getElementById("setupGrade").value;
+  const subject=document.getElementById("setupSubject").value;
+  const groups=data.setup.gradeTopics?.[grade]?.[subject];
+  if(!groups?.[main]) return;
+
+  const updated=prompt("Rediger hovedtema:",main);
+  if(updated===null) return;
+  const value=updated.trim();
+  if(!value) return alert("Hovedtema kan ikke være tomt.");
+  if(value!==main && groups[value]) return alert("Dette hovedtemaet finnes allerede.");
+
+  groups[value]=groups[main];
+  if(value!==main) delete groups[main];
+
+  data.plans.forEach(p=>{
+    if(p.grade===grade && p.subject===subject && p.mainTopic===main){
+      p.mainTopic=value;
+    }
+  });
+
+  saveData();
+  renderAll();
+  document.getElementById("setupGrade").value=grade;
+  updateSetupSubjects();
+  document.getElementById("setupSubject").value=subject;
+  renderTopics();
+};
+
 
 /* Årsplan */
 document.getElementById("planGrade").addEventListener("change",updatePlanSubjects);

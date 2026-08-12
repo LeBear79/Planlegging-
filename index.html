@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Læreroversikt v2.4</title>
+  <title>Læreroversikt v2.5</title>
   <meta name="theme-color" content="#1f4f46" />
   <style>
     :root{
@@ -199,7 +199,7 @@
       <h1>Læreroversikt</h1>
       <small>Planlegging, progresjon og oversikt</small>
     </div>
-    <div class="version">v2.4</div>
+    <div class="version">v2.5</div>
   </div>
 </header>
 
@@ -294,7 +294,7 @@
           </div>
           <div>
             <label>Trinn</label>
-            <select id="planGrade" onchange="updatePlanMainTopicsFromSetup()">
+            <select id="planGrade" onchange="updatePlanSubjectsFromSetup()">
               <option value="">Velg trinn</option>
               <option>8. trinn</option>
               <option>9. trinn</option>
@@ -472,7 +472,7 @@
         <div class="grid two">
           <div>
             <label>Trinn</label>
-            <select id="setupGradeForTopics" onchange="renderGradeTopicSetup()">
+            <select id="setupGradeForTopics" onchange="updateSetupGradeSubjects()">
               <option value="">Velg trinn</option>
               <option>8. trinn</option>
               <option>9. trinn</option>
@@ -549,6 +549,71 @@ data.setup.grades ||= ["8. trinn","9. trinn","10. trinn"];
 data.setup.classGrades ||= {};
 data.setup.gradeSubjects ||= {};
 data.setup.gradeTopics ||= {};
+
+// Migrer eldre data automatisk til trinnbasert struktur.
+function inferGradeFromClassName(cls){
+  const m=String(cls||"").match(/(?:^|\D)(8|9|10)(?:\D|$)/);
+  return m ? `${m[1]}. trinn` : "";
+}
+
+// 1) Koble eldre klasser til trinn der det kan utledes av klassenavnet.
+for(const cls of Object.keys(data.setup.classes||{})){
+  if(!data.setup.classGrades[cls]){
+    const inferred=inferGradeFromClassName(cls);
+    if(inferred) data.setup.classGrades[cls]=inferred;
+  }
+}
+
+// 2) Flytt eldre klassebaserte fag til trinnbaserte fag.
+for(const [cls,classData] of Object.entries(data.setup.classes||{})){
+  const grade=data.setup.classGrades[cls] || inferGradeFromClassName(cls);
+  if(!grade) continue;
+
+  const subjects=classData?.subjects || {};
+  data.setup.gradeSubjects[grade] ||= [];
+  data.setup.gradeTopics[grade] ||= {};
+
+  for(const [subject,legacyTopics] of Object.entries(subjects)){
+    if(!data.setup.gradeSubjects[grade].includes(subject)){
+      data.setup.gradeSubjects[grade].push(subject);
+    }
+    data.setup.gradeTopics[grade][subject] ||= {};
+
+    // Eldre "tema"-lister hadde ikke undertema. Behold dem som hovedtema.
+    if(Array.isArray(legacyTopics)){
+      for(const main of legacyTopics){
+        if(typeof main==="string" && main.trim()){
+          data.setup.gradeTopics[grade][subject][main] ||= [];
+        }
+      }
+    }
+  }
+}
+
+// 3) Bruk eksisterende årsplan til å fylle grunnbasen med hoved- og undertema.
+for(const p of data.plans||[]){
+  const grade=p.grade || "";
+  const subject=p.subject || "";
+  const main=p.mainTopic || "";
+  const sub=p.subTopic || "";
+  if(!grade || !subject) continue;
+
+  data.setup.gradeSubjects[grade] ||= [];
+  if(!data.setup.gradeSubjects[grade].includes(subject)){
+    data.setup.gradeSubjects[grade].push(subject);
+  }
+
+  data.setup.gradeTopics[grade] ||= {};
+  data.setup.gradeTopics[grade][subject] ||= {};
+
+  if(main){
+    data.setup.gradeTopics[grade][subject][main] ||= [];
+    if(sub && !data.setup.gradeTopics[grade][subject][main].includes(sub)){
+      data.setup.gradeTopics[grade][subject][main].push(sub);
+    }
+  }
+}
+
 
 
 
@@ -648,17 +713,15 @@ function updateLessonSubTopics(){
   const subject=document.getElementById("lessonSubject")?.value||"";
   const grade=classGrade(cls);
   const main=document.getElementById("lessonMainTopic")?.value||"";
-  const subs=(data.setup.gradeTopics?.[grade]?.[subject]?.[main] || []).slice();
+  const subs=(data.setup.gradeTopics?.[grade]?.[subject]?.[main] || []).slice().sort((a,b)=>a.localeCompare(b,"nb"));
 
   fillSelect("lessonSubTopic",subs,"Velg undertema");
 
-  // Foreslå undertemaet i årsplanen for aktuell uke dersom det finnes.
   const week=isoWeek(lessonDateObject());
   const planned=planForWeek(cls,subject,week);
   if(planned?.mainTopic===main && planned?.subTopic && subs.includes(planned.subTopic)){
     document.getElementById("lessonSubTopic").value=planned.subTopic;
   }
-
   renderLessonPlanLink();
 }
 
@@ -721,16 +784,12 @@ function refreshSetupDrivenSelects(){
   const classes=setupClasses();
   ["lessonClass","lostClass"].forEach(id=>fillSelect(id,classes,"Velg klasse"));
 
-  const allSubjects=[...new Set(Object.values(data.setup.gradeSubjects||{}).flat())]
-    .sort((a,b)=>a.localeCompare(b,"nb"));
-  fillSelect("planSubject",allSubjects,"Velg fag");
-
   const grade=document.getElementById("setupGradeForTopics")?.value||"";
-  fillSelect("setupGradeSubject",(data.setup.gradeSubjects?.[grade]||[]),"Velg fag");
+  fillSelect("setupGradeSubject",gradeSubjects(grade),"Velg fag");
 
   updateLessonSubjects();
   updateLostSubjects();
-  updatePlanMainTopicsFromSetup();
+  updatePlanSubjectsFromSetup();
   renderSetupLists();
   renderGradeTopicSetup();
 }
@@ -738,7 +797,6 @@ function updateLessonSubjects(){
   const cls=document.getElementById("lessonClass")?.value||"";
   const grade=classGrade(cls);
   const subjects=(data.setup.gradeSubjects?.[grade] || []).slice().sort((a,b)=>a.localeCompare(b,"nb"));
-
   fillSelect("lessonSubject",subjects,"Velg fag");
   updateLessonTopics();
 }
@@ -751,13 +809,11 @@ function updateLessonTopics(){
 
   fillSelect("lessonMainTopic",mains,"Velg hovedtema");
 
-  // Foreslå temaet i årsplanen for aktuell uke dersom det finnes.
   const week=isoWeek(lessonDateObject());
   const planned=planForWeek(cls,subject,week);
   if(planned?.mainTopic && mains.includes(planned.mainTopic)){
     document.getElementById("lessonMainTopic").value=planned.mainTopic;
   }
-
   updateLessonSubTopics();
 }
 function updateLostSubjects(){
@@ -765,6 +821,12 @@ function updateLostSubjects(){
   const grade=classGrade(cls);
   const subjects=(data.setup.gradeSubjects?.[grade] || []).slice().sort((a,b)=>a.localeCompare(b,"nb"));
   fillSelect("lostSubject",subjects,"Velg fag");
+}
+
+function updateSetupGradeSubjects(){
+  const grade=document.getElementById("setupGradeForTopics")?.value||"";
+  fillSelect("setupGradeSubject",gradeSubjects(grade),"Velg fag");
+  renderGradeTopicSetup();
 }
 
 function gradeSubjects(grade){
@@ -786,6 +848,79 @@ function addGradeSubject(){
   data.setup.gradeTopics[grade][subject] ||= {};
 
   document.getElementById("setupNewSubject").value="";
+  localStorage.setItem("laereroversikt_v1", JSON.stringify(data));
+
+  fillSelect("setupGradeSubject",gradeSubjects(grade),"Velg fag");
+  document.getElementById("setupGradeSubject").value=subject;
+  renderAll();
+  document.getElementById("setupGradeForTopics").value=grade;
+  fillSelect("setupGradeSubject",gradeSubjects(grade),"Velg fag");
+  document.getElementById("setupGradeSubject").value=subject;
+  renderGradeTopicSetup();
+}
+
+// 1) Koble eldre klasser til trinn der det kan utledes av klassenavnet.
+for(const cls of Object.keys(data.setup.classes||{})){
+  if(!data.setup.classGrades[cls]){
+    const inferred=inferGradeFromClassName(cls);
+    if(inferred) data.setup.classGrades[cls]=inferred;
+  }
+}
+
+// 2) Flytt eldre klassebaserte fag til trinnbaserte fag.
+for(const [cls,classData] of Object.entries(data.setup.classes||{})){
+  const grade=data.setup.classGrades[cls] || inferGradeFromClassName(cls);
+  if(!grade) continue;
+
+  const subjects=classData?.subjects || {};
+  data.setup.gradeSubjects[grade] ||= [];
+  data.setup.gradeTopics[grade] ||= {};
+
+  for(const [subject,legacyTopics] of Object.entries(subjects)){
+    if(!data.setup.gradeSubjects[grade].includes(subject)){
+      data.setup.gradeSubjects[grade].push(subject);
+    }
+    data.setup.gradeTopics[grade][subject] ||= {};
+
+    // Eldre "tema"-lister hadde ikke undertema. Behold dem som hovedtema.
+    if(Array.isArray(legacyTopics)){
+      for(const main of legacyTopics){
+        if(typeof main==="string" && main.trim()){
+          data.setup.gradeTopics[grade][subject][main] ||= [];
+        }
+      }
+    }
+  }
+}
+
+// 3) Bruk eksisterende årsplan til å fylle grunnbasen med hoved- og undertema.
+for(const p of data.plans||[]){
+  const grade=p.grade || "";
+  const subject=p.subject || "";
+  const main=p.mainTopic || "";
+  const sub=p.subTopic || "";
+  if(!grade || !subject) continue;
+
+  data.setup.gradeSubjects[grade] ||= [];
+  if(!data.setup.gradeSubjects[grade].includes(subject)){
+    data.setup.gradeSubjects[grade].push(subject);
+  }
+
+  data.setup.gradeTopics[grade] ||= {};
+  data.setup.gradeTopics[grade][subject] ||= {};
+
+  if(main){
+    data.setup.gradeTopics[grade][subject][main] ||= [];
+    if(sub && !data.setup.gradeTopics[grade][subject][main].includes(sub)){
+      data.setup.gradeTopics[grade][subject][main].push(sub);
+    }
+  }
+}
+
+  data.setup.gradeTopics[grade] ||= {};
+  data.setup.gradeTopics[grade][subject] ||= {};
+
+  document.getElementById("setupNewSubject").value="";
   persist();
 }
 
@@ -800,6 +935,83 @@ function addGradeTopic(){
   }
 
   data.setup.gradeTopics ||= {};
+  data.setup.gradeTopics[grade] ||= {};
+  data.setup.gradeTopics[grade][subject] ||= {};
+  data.setup.gradeTopics[grade][subject][main] ||= [];
+
+  if(!data.setup.gradeTopics[grade][subject][main].includes(sub)){
+    data.setup.gradeTopics[grade][subject][main].push(sub);
+  }
+
+  document.getElementById("setupMainTopic").value="";
+  document.getElementById("setupSubTopic").value="";
+  localStorage.setItem("laereroversikt_v1", JSON.stringify(data));
+
+  renderAll();
+  document.getElementById("setupGradeForTopics").value=grade;
+  fillSelect("setupGradeSubject",gradeSubjects(grade),"Velg fag");
+  document.getElementById("setupGradeSubject").value=subject;
+  renderGradeTopicSetup();
+}
+
+// 1) Koble eldre klasser til trinn der det kan utledes av klassenavnet.
+for(const cls of Object.keys(data.setup.classes||{})){
+  if(!data.setup.classGrades[cls]){
+    const inferred=inferGradeFromClassName(cls);
+    if(inferred) data.setup.classGrades[cls]=inferred;
+  }
+}
+
+// 2) Flytt eldre klassebaserte fag til trinnbaserte fag.
+for(const [cls,classData] of Object.entries(data.setup.classes||{})){
+  const grade=data.setup.classGrades[cls] || inferGradeFromClassName(cls);
+  if(!grade) continue;
+
+  const subjects=classData?.subjects || {};
+  data.setup.gradeSubjects[grade] ||= [];
+  data.setup.gradeTopics[grade] ||= {};
+
+  for(const [subject,legacyTopics] of Object.entries(subjects)){
+    if(!data.setup.gradeSubjects[grade].includes(subject)){
+      data.setup.gradeSubjects[grade].push(subject);
+    }
+    data.setup.gradeTopics[grade][subject] ||= {};
+
+    // Eldre "tema"-lister hadde ikke undertema. Behold dem som hovedtema.
+    if(Array.isArray(legacyTopics)){
+      for(const main of legacyTopics){
+        if(typeof main==="string" && main.trim()){
+          data.setup.gradeTopics[grade][subject][main] ||= [];
+        }
+      }
+    }
+  }
+}
+
+// 3) Bruk eksisterende årsplan til å fylle grunnbasen med hoved- og undertema.
+for(const p of data.plans||[]){
+  const grade=p.grade || "";
+  const subject=p.subject || "";
+  const main=p.mainTopic || "";
+  const sub=p.subTopic || "";
+  if(!grade || !subject) continue;
+
+  data.setup.gradeSubjects[grade] ||= [];
+  if(!data.setup.gradeSubjects[grade].includes(subject)){
+    data.setup.gradeSubjects[grade].push(subject);
+  }
+
+  data.setup.gradeTopics[grade] ||= {};
+  data.setup.gradeTopics[grade][subject] ||= {};
+
+  if(main){
+    data.setup.gradeTopics[grade][subject][main] ||= [];
+    if(sub && !data.setup.gradeTopics[grade][subject][main].includes(sub)){
+      data.setup.gradeTopics[grade][subject][main].push(sub);
+    }
+  }
+}
+
   data.setup.gradeTopics[grade] ||= {};
   data.setup.gradeTopics[grade][subject] ||= {};
   data.setup.gradeTopics[grade][subject][main] ||= [];
@@ -831,8 +1043,6 @@ function deleteGradeTopic(grade,subject,main,sub){
 
 function renderGradeTopicSetup(){
   const grade=document.getElementById("setupGradeForTopics")?.value||"";
-  fillSelect("setupGradeSubject",gradeSubjects(grade),"Velg fag");
-
   const subject=document.getElementById("setupGradeSubject")?.value||"";
   const box=document.getElementById("setupGradeTopicList");
   if(!box) return;
@@ -846,12 +1056,12 @@ function renderGradeTopicSetup(){
   let htmlParts="";
   if(subjects.length){
     htmlParts += `<div style="margin-bottom:10px"><strong>Fag:</strong> ` +
-      subjects.map(s=>`<span class="setup-badge">${escapeHtml(s)} <button style="border:0;background:none;cursor:pointer" onclick="deleteGradeSubject('${grade.replace(/'/g,"\\'")}','${s.replace(/'/g,"\\'")}')">×</button></span>`).join("") +
+      subjects.map(s=>`<span class="setup-badge">${escapeHtml(s)}</span>`).join("") +
       `</div>`;
   }
 
   if(!subject){
-    box.innerHTML=htmlParts || '<div class="empty">Ingen fag registrert for dette trinnet.</div>';
+    box.innerHTML=htmlParts + '<div class="empty">Velg fag for å se hovedtema og undertema.</div>';
     return;
   }
 
@@ -861,12 +1071,10 @@ function renderGradeTopicSetup(){
   htmlParts += mains.length ? mains.map(main=>`
     <div style="padding:10px 0;border-top:1px solid var(--border)">
       <strong>${escapeHtml(main)}</strong><br>
-      ${(groups[main]||[]).map(sub=>`
-        <span class="setup-badge">${escapeHtml(sub)}
-          <button style="border:0;background:none;cursor:pointer"
-          onclick="deleteGradeTopic('${grade.replace(/'/g,"\\'")}','${subject.replace(/'/g,"\\'")}','${main.replace(/'/g,"\\'")}','${sub.replace(/'/g,"\\'")}')">×</button>
-        </span>`).join("")}
-    </div>`).join("") : '<div class="empty">Ingen temaer registrert for valgt fag.</div>';
+      ${(groups[main]||[]).length
+        ? (groups[main]||[]).map(sub=>`<span class="setup-badge">${escapeHtml(sub)}</span>`).join("")
+        : '<span class="muted">Ingen undertema registrert ennå.</span>'}
+    </div>`).join("") : '<div class="empty">Ingen hovedtema registrert for valgt fag.</div>';
 
   box.innerHTML=htmlParts;
 }
@@ -942,6 +1150,13 @@ function togglePlanType(){
 }
 function printAnnualPlan(){ window.print(); }
 
+function updatePlanSubjectsFromSetup(){
+  const grade=document.getElementById("planGrade")?.value||"";
+  const subjects=(data.setup.gradeSubjects?.[grade] || []).slice().sort((a,b)=>a.localeCompare(b,"nb"));
+  fillSelect("planSubject",subjects,"Velg fag");
+  updatePlanMainTopicsFromSetup();
+}
+
 function updatePlanMainTopicsFromSetup(){
   const grade=document.getElementById("planGrade")?.value||"";
   const subject=document.getElementById("planSubject")?.value||"";
@@ -955,7 +1170,7 @@ function updatePlanSubTopicsFromSetup(){
   const grade=document.getElementById("planGrade")?.value||"";
   const subject=document.getElementById("planSubject")?.value||"";
   const main=document.getElementById("planMainTopicSelect")?.value||"";
-  const subs=(data.setup.gradeTopics?.[grade]?.[subject]?.[main] || []).slice();
+  const subs=(data.setup.gradeTopics?.[grade]?.[subject]?.[main] || []).slice().sort((a,b)=>a.localeCompare(b,"nb"));
 
   fillSelect("planSubTopicSelect",subs,"Velg undertema");
 }

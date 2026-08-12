@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Læreroversikt v2.9</title>
+  <title>Læreroversikt v3.0</title>
   <meta name="theme-color" content="#245b50" />
   <style>
     :root{
@@ -63,11 +63,16 @@
       font-weight:800;
       background:#f0f0f0;
     }
-    .print-table th:nth-child(1), .print-table td:nth-child(1){width:9%}
-    .print-table th:nth-child(2), .print-table td:nth-child(2){width:12%}
-    .print-table th:nth-child(3), .print-table td:nth-child(3){width:14%}
-    .print-table th:nth-child(4), .print-table td:nth-child(4){width:27%}
-    .print-table th:nth-child(5), .print-table td:nth-child(5){width:38%}
+    .print-table th:nth-child(1), .print-table td:nth-child(1){width:14%}
+    .print-table th:nth-child(2), .print-table td:nth-child(2){width:28%}
+    .print-table th:nth-child(3), .print-table td:nth-child(3){width:36%}
+    .print-table th:nth-child(4), .print-table td:nth-child(4){width:22%}
+
+    .print-table td.topic-cell{font-weight:800;text-align:center;vertical-align:middle}
+    .print-table td.week-cell{font-weight:700;text-align:center;vertical-align:middle;white-space:nowrap}
+    .print-table ul{margin:0;padding-left:18px}
+    .print-table li{margin:0 0 3px 0}
+
     .print-title{
       display:flex;
       align-items:flex-end;
@@ -103,7 +108,13 @@
       .print-page{display:block!important}
       .page-break{break-before:page;page-break-before:always}
       .print-table tr{break-inside:avoid;page-break-inside:avoid}
-      .print-title{display:flex!important}
+  
+    .print-table td.topic-cell{font-weight:800;text-align:center;vertical-align:middle}
+    .print-table td.week-cell{font-weight:700;text-align:center;vertical-align:middle;white-space:nowrap}
+    .print-table ul{margin:0;padding-left:18px}
+    .print-table li{margin:0 0 3px 0}
+
+    .print-title{display:flex!important}
     }
   </style>
 </head>
@@ -114,7 +125,7 @@
       <h1>Læreroversikt</h1>
       <div class="subtitle">Planlegging, progresjon og oversikt</div>
     </div>
-    <div class="version">v2.9</div>
+    <div class="version">v3.0</div>
   </div>
 </header>
 
@@ -290,10 +301,9 @@
             <thead>
               <tr>
                 <th>Uke</th>
-                <th>Dato</th>
-                <th>Trinn</th>
                 <th>Hovedtema</th>
-                <th>Undertema / aktivitet</th>
+                <th>Undertema</th>
+                <th>Vurdering</th>
               </tr>
             </thead>
             <tbody id="printAutumnBody"></tbody>
@@ -309,10 +319,9 @@
             <thead>
               <tr>
                 <th>Uke</th>
-                <th>Dato</th>
-                <th>Trinn</th>
                 <th>Hovedtema</th>
-                <th>Undertema / aktivitet</th>
+                <th>Undertema</th>
+                <th>Vurdering</th>
               </tr>
             </thead>
             <tbody id="printSpringBody"></tbody>
@@ -878,41 +887,126 @@ function renderPrintPlan(){
   const spring=document.getElementById("printSpringBody");
   if(!autumn || !spring) return;
 
-  const sorted=data.plans.slice().sort((a,b)=>{
-    const semA=semesterForWeek(a.from)==="autumn" ? 0 : 1;
-    const semB=semesterForWeek(b.from)==="autumn" ? 0 : 1;
-    if(semA!==semB) return semA-semB;
-    const g=(a.grade||"").localeCompare(b.grade||"","nb"); if(g!==0)return g;
-    const s=(a.subject||"").localeCompare(b.subject||"","nb"); if(s!==0)return s;
-    return Number(a.from)-Number(b.from);
-  });
-
-  const rowHtml=p=>`
-    <tr>
-      <td>Uke ${p.from}${p.to!==p.from?"–"+p.to:""}</td>
-      <td>${p.type==="assessment" ? esc(formatShortDate(p.date)) : ""}</td>
-      <td>${esc(p.grade||"")}</td>
-      <td>${p.type==="holiday" ? "Ferie / fri" : p.type==="assessment" ? esc(p.mainTopic||"Vurdering") : esc(p.mainTopic||"")}</td>
-      <td>${p.type==="holiday" ? esc(p.holiday||"") : p.type==="assessment" ? `<strong>${esc(p.assessmentType||"Vurdering")}</strong> – ${esc(p.assessmentTitle||"")}` : esc(p.subTopic||"")}</td>
-    </tr>`;
-
-  const autumnRows=sorted.filter(p=>semesterForWeek(p.from)==="autumn");
-  const springRows=sorted.filter(p=>semesterForWeek(p.from)==="spring");
-
   const selectedSubject=document.getElementById("planSubject")?.value || "";
-  const subjects=[...new Set(sorted.map(p=>p.subject).filter(Boolean))];
+  const selectedGrade=document.getElementById("planGrade")?.value || "";
+
+  let items=data.plans.slice();
+  if(selectedSubject) items=items.filter(p=>p.subject===selectedSubject);
+  if(selectedGrade) items=items.filter(p=>p.grade===selectedGrade);
+
+  const subjects=[...new Set(items.map(p=>p.subject).filter(Boolean))];
+  const grades=[...new Set(items.map(p=>p.grade).filter(Boolean))];
   const subjectName=selectedSubject || (subjects.length===1 ? subjects[0] : "");
-  const heading=subjectName ? `Årsplan – ${subjectName}` : "Årsplan";
+  const gradeName=selectedGrade || (grades.length===1 ? grades[0] : "");
+
+  const headingParts=["Årsplan"];
+  if(subjectName) headingParts.push(subjectName);
+  if(gradeName) headingParts.push(gradeName);
+  const heading=headingParts.join(" – ");
+
   const autumnHeading=document.getElementById("printAutumnHeading");
   const springHeading=document.getElementById("printSpringHeading");
   if(autumnHeading) autumnHeading.textContent=heading;
   if(springHeading) springHeading.textContent=heading;
 
-  autumn.innerHTML=autumnRows.length ? autumnRows.map(rowHtml).join("") :
-    '<tr><td colspan="5">Ingen årsplanpunkter registrert for august–desember.</td></tr>';
+  const teaching=items.filter(p=>p.type==="teaching");
+  const holidays=items.filter(p=>p.type==="holiday");
+  const assessments=items.filter(p=>p.type==="assessment");
 
-  spring.innerHTML=springRows.length ? springRows.map(rowHtml).join("") :
-    '<tr><td colspan="5">Ingen årsplanpunkter registrert for januar–juni.</td></tr>';
+  const grouped=[];
+  const sortedTeaching=teaching.slice().sort((a,b)=>{
+    const g=(a.grade||"").localeCompare(b.grade||"","nb"); if(g!==0)return g;
+    const s=(a.subject||"").localeCompare(b.subject||"","nb"); if(s!==0)return s;
+    const mt=(a.mainTopic||"").localeCompare(b.mainTopic||"","nb"); if(mt!==0)return mt;
+    return Number(a.from)-Number(b.from);
+  });
+
+  for(const p of sortedTeaching){
+    const last=grouped[grouped.length-1];
+    const sameKey=last &&
+      last.grade===p.grade &&
+      last.subject===p.subject &&
+      last.mainTopic===p.mainTopic &&
+      Number(p.from) <= Number(last.to)+1;
+
+    if(sameKey){
+      last.to=Math.max(Number(last.to),Number(p.to));
+      if(p.subTopic && !last.subTopics.includes(p.subTopic)) last.subTopics.push(p.subTopic);
+    }else{
+      grouped.push({
+        grade:p.grade,
+        subject:p.subject,
+        mainTopic:p.mainTopic,
+        from:Number(p.from),
+        to:Number(p.to),
+        subTopics:p.subTopic ? [p.subTopic] : []
+      });
+    }
+  }
+
+  holidays.forEach(p=>{
+    grouped.push({
+      grade:p.grade,
+      subject:p.subject,
+      mainTopic:"Ferie / fri",
+      from:Number(p.from),
+      to:Number(p.to),
+      subTopics:[p.holiday||""],
+      holiday:true
+    });
+  });
+
+  grouped.sort((a,b)=>{
+    const semA=semesterForWeek(a.from)==="autumn"?0:1;
+    const semB=semesterForWeek(b.from)==="autumn"?0:1;
+    if(semA!==semB)return semA-semB;
+    return a.from-b.from;
+  });
+
+  function assessmentsFor(group){
+    return assessments.filter(a=>{
+      if(a.grade!==group.grade || a.subject!==group.subject) return false;
+      const w=Number(a.from);
+      return w>=Number(group.from) && w<=Number(group.to);
+    });
+  }
+
+  function rowHtml(g){
+    const weekText=`${g.from}${g.to!==g.from?"–"+g.to:""}`;
+    const subs=g.subTopics.filter(Boolean);
+    const assessmentRows=assessmentsFor(g);
+
+    const subHtml=subs.length
+      ? `<ul>${subs.map(s=>`<li>${esc(s)}</li>`).join("")}</ul>`
+      : "";
+
+    const assessmentHtml=assessmentRows.length
+      ? assessmentRows.map(a=>{
+          const type=esc(a.assessmentType||"Vurdering");
+          const title=esc(a.assessmentTitle||"");
+          const date=a.date ? ` ${esc(formatShortDate(a.date))}` : "";
+          return `<div><strong>${type}</strong>${date}${title?`<br>${title}`:""}</div>`;
+        }).join('<div style="height:6px"></div>')
+      : "";
+
+    return `<tr>
+      <td class="week-cell">${weekText}</td>
+      <td class="topic-cell">${esc(g.mainTopic||"")}</td>
+      <td>${subHtml}</td>
+      <td>${assessmentHtml}</td>
+    </tr>`;
+  }
+
+  const autumnRows=grouped.filter(g=>semesterForWeek(g.from)==="autumn");
+  const springRows=grouped.filter(g=>semesterForWeek(g.from)==="spring");
+
+  autumn.innerHTML=autumnRows.length
+    ? autumnRows.map(rowHtml).join("")
+    : '<tr><td colspan="4">Ingen årsplanpunkter registrert for august–desember.</td></tr>';
+
+  spring.innerHTML=springRows.length
+    ? springRows.map(rowHtml).join("")
+    : '<tr><td colspan="4">Ingen årsplanpunkter registrert for januar–juni.</td></tr>';
 }
 
 function renderPlans(){

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Læreroversikt v3.0</title>
+  <title>Læreroversikt v3.1</title>
   <meta name="theme-color" content="#245b50" />
   <style>
     :root{
@@ -125,7 +125,7 @@
       <h1>Læreroversikt</h1>
       <div class="subtitle">Planlegging, progresjon og oversikt</div>
     </div>
-    <div class="version">v3.0</div>
+    <div class="version">v3.1</div>
   </div>
 </header>
 
@@ -179,7 +179,10 @@
           <label>Kort notat</label>
           <textarea id="lessonNote" placeholder="Valgfritt"></textarea>
         </div>
-        <button class="primary" style="margin-top:10px" id="saveLessonBtn">Lagre time</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+          <button class="primary" id="saveLessonBtn">Lagre time</button>
+          <button class="secondary" id="cancelLessonEditBtn" style="display:none">Avbryt redigering</button>
+        </div>
       </div>
 
       <div class="card">
@@ -1098,22 +1101,122 @@ document.getElementById("saveLessonBtn").addEventListener("click",()=>{
   const week=Number(document.getElementById("lessonWeek").value);
   const reached=document.getElementById("lessonReached").value.trim();
   const note=document.getElementById("lessonNote").value.trim();
-  if(!cls||!subject||!main||!sub||!date||!week||!reached) return alert("Fyll inn alle nødvendige felter.");
-  data.lessons.unshift({id:Date.now(),cls,subject,mainTopic:main,subTopic:sub,date,week,reached,note});
+
+  if(!cls||!subject||!main||!sub||!date||!week||!reached){
+    return alert("Fyll inn alle nødvendige felter.");
+  }
+
+  const btn=document.getElementById("saveLessonBtn");
+  const editId=Number(btn.dataset.editId || 0);
+
+  if(editId){
+    const lesson=data.lessons.find(l=>l.id===editId);
+    if(lesson){
+      Object.assign(lesson,{
+        cls,
+        subject,
+        mainTopic:main,
+        subTopic:sub,
+        date,
+        week,
+        reached,
+        note
+      });
+    }
+    delete btn.dataset.editId;
+    btn.textContent="Lagre time";
+    document.getElementById("cancelLessonEditBtn").style.display="none";
+  }else{
+    data.lessons.unshift({
+      id:Date.now(),
+      cls,
+      subject,
+      mainTopic:main,
+      subTopic:sub,
+      date,
+      week,
+      reached,
+      note
+    });
+  }
+
   document.getElementById("lessonReached").value="";
   document.getElementById("lessonNote").value="";
-  saveData();renderAll();
-});
+
+  saveData();
+  renderAll();
+}); 
+
 function renderLessons(){
   const box=document.getElementById("lessonList");
-  if(!data.lessons.length){box.innerHTML='<div class="empty">Ingen timer registrert.</div>';return}
-  box.innerHTML=data.lessons.slice(0,15).map(l=>`
+  if(!data.lessons.length){
+    box.innerHTML='<div class="empty">Ingen timer registrert.</div>';
+    return;
+  }
+
+  box.innerHTML=data.lessons.slice(0,30).map(l=>`
     <div class="lesson-card">
-      <strong>${esc(l.cls)} · ${esc(l.subject)} · uke ${l.week}</strong>
-      <div>${esc(l.mainTopic)} → ${esc(l.subTopic)}</div>
-      <div class="muted">Kom til: ${esc(l.reached)}${l.note?` · ${esc(l.note)}`:""}</div>
+      <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap">
+        <div>
+          <strong>${esc(l.cls)} · ${esc(l.subject)} · uke ${l.week}</strong>
+          <div>${esc(l.mainTopic)} → ${esc(l.subTopic)}</div>
+          <div class="muted">Kom til: ${esc(l.reached)}${l.note?` · ${esc(l.note)}`:""}</div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="secondary" onclick="editLesson(${l.id})">Rediger</button>
+          <button class="danger" onclick="removeLesson(${l.id})">Slett</button>
+        </div>
+      </div>
     </div>`).join("");
 }
+
+
+window.removeLesson=function(id){
+  const lesson=data.lessons.find(l=>l.id===id);
+  if(!lesson) return;
+  if(!confirm(`Slette den registrerte timen for ${lesson.cls} · ${lesson.subject} · uke ${lesson.week}?`)) return;
+  data.lessons=data.lessons.filter(l=>l.id!==id);
+  saveData();
+  renderAll();
+};
+
+window.editLesson=function(id){
+  const lesson=data.lessons.find(l=>l.id===id);
+  if(!lesson) return;
+
+  const oldClass=document.getElementById("lessonClass").value;
+  const oldSubject=document.getElementById("lessonSubject").value;
+
+  // Fyll registreringsskjemaet med eksisterende data
+  fill("lessonClass",classNames(),"Velg klasse");
+  document.getElementById("lessonClass").value=lesson.cls;
+  updateLessonSubjects();
+
+  document.getElementById("lessonSubject").value=lesson.subject;
+  updateLessonMain();
+
+  document.getElementById("lessonMain").value=lesson.mainTopic;
+  updateLessonSub();
+
+  document.getElementById("lessonSub").value=lesson.subTopic;
+  document.getElementById("lessonDate").value=lesson.date || "";
+  document.getElementById("lessonWeek").value=lesson.week || "";
+  document.getElementById("lessonReached").value=lesson.reached || "";
+  document.getElementById("lessonNote").value=lesson.note || "";
+
+  const btn=document.getElementById("saveLessonBtn");
+  btn.textContent="Lagre endringer";
+  btn.dataset.editId=String(id);
+  document.getElementById("cancelLessonEditBtn").style.display="inline-block";
+
+  // Flytt brukeren til registreringsdelen
+  document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
+  document.querySelectorAll(".panel").forEach(p=>p.classList.remove("active"));
+  document.querySelector('[data-tab="oversikt"]').classList.add("active");
+  document.getElementById("oversikt").classList.add("active");
+  window.scrollTo({top:0,behavior:"smooth"});
+};
+
 
 /* Mistet tid */
 document.getElementById("lostClass").addEventListener("change",updateLostSubjects);
@@ -1152,6 +1255,16 @@ function renderStats(){
   document.getElementById("statPlans").textContent=data.plans.length;
   document.getElementById("statLost").textContent=fmtHours(data.lost.reduce((s,x)=>s+Number(x.hours||0),0));
 }
+
+
+document.getElementById("cancelLessonEditBtn").addEventListener("click",()=>{
+  const btn=document.getElementById("saveLessonBtn");
+  delete btn.dataset.editId;
+  btn.textContent="Lagre time";
+  document.getElementById("cancelLessonEditBtn").style.display="none";
+  document.getElementById("lessonReached").value="";
+  document.getElementById("lessonNote").value="";
+});
 
 /* Init */
 const today=new Date();

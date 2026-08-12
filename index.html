@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Læreroversikt v2.6</title>
+  <title>Læreroversikt v2.8</title>
   <meta name="theme-color" content="#245b50" />
   <style>
     :root{
@@ -63,11 +63,11 @@
       font-weight:800;
       background:#f0f0f0;
     }
-    .print-table th:nth-child(1), .print-table td:nth-child(1){width:10%}
-    .print-table th:nth-child(2), .print-table td:nth-child(2){width:14%}
-    .print-table th:nth-child(3), .print-table td:nth-child(3){width:16%}
+    .print-table th:nth-child(1), .print-table td:nth-child(1){width:9%}
+    .print-table th:nth-child(2), .print-table td:nth-child(2){width:12%}
+    .print-table th:nth-child(3), .print-table td:nth-child(3){width:14%}
     .print-table th:nth-child(4), .print-table td:nth-child(4){width:27%}
-    .print-table th:nth-child(5), .print-table td:nth-child(5){width:33%}
+    .print-table th:nth-child(5), .print-table td:nth-child(5){width:38%}
     .print-title{
       display:flex;
       align-items:flex-end;
@@ -114,7 +114,7 @@
       <h1>Læreroversikt</h1>
       <div class="subtitle">Planlegging, progresjon og oversikt</div>
     </div>
-    <div class="version">v2.6</div>
+    <div class="version">v2.8</div>
   </div>
 </header>
 
@@ -204,11 +204,12 @@
           <select id="planType">
             <option value="teaching">Undervisning</option>
             <option value="holiday">Ferie / fri</option>
+            <option value="assessment">Vurdering</option>
           </select>
         </div>
       </div>
 
-      <div class="grid two" style="margin-top:10px">
+      <div id="planWeekFields" class="grid two" style="margin-top:10px">
         <div>
           <label>Fra uke</label>
           <input id="planFrom" type="number" min="1" max="53" />
@@ -242,6 +243,32 @@
           <option>Annet</option>
         </select>
       </div>
+      <div id="assessmentFields" style="display:none;margin-top:10px">
+        <div class="grid three">
+          <div>
+            <label>Dato</label>
+            <input id="assessmentDate" type="date" />
+          </div>
+          <div>
+            <label>Vurderingstype</label>
+            <select id="assessmentType">
+              <option>Prøve</option>
+              <option>Muntlig vurdering</option>
+              <option>Innlevering</option>
+              <option>Praktisk vurdering</option>
+              <option>Annet</option>
+            </select>
+          </div>
+          <div>
+            <label>Hovedtema</label>
+            <select id="assessmentMain"></select>
+          </div>
+        </div>
+        <div style="margin-top:10px">
+          <label>Navn / beskrivelse</label>
+          <input id="assessmentTitle" placeholder="f.eks. Prøve – Algebra" />
+        </div>
+      </div>
 
       <button class="primary" style="margin-top:10px" id="savePlanBtn">Legg til</button>
     </div>
@@ -256,17 +283,17 @@
       <div id="printPlan" class="print-only">
         <section class="print-page">
           <div class="print-title">
-            <h1>Årsplan</h1>
-            <div id="printAutumnTitle" class="print-subtitle">August–desember</div>
+            <h1 id="printAutumnHeading">Årsplan</h1>
+            <div class="print-subtitle">August–desember</div>
           </div>
           <table class="print-table">
             <thead>
               <tr>
                 <th>Uke</th>
+                <th>Dato</th>
                 <th>Trinn</th>
-                <th>Fag</th>
                 <th>Hovedtema</th>
-                <th>Undertema / ferie</th>
+                <th>Undertema / aktivitet</th>
               </tr>
             </thead>
             <tbody id="printAutumnBody"></tbody>
@@ -275,17 +302,17 @@
 
         <section class="print-page page-break">
           <div class="print-title">
-            <h1>Årsplan</h1>
-            <div id="printSpringTitle" class="print-subtitle">Januar–juni</div>
+            <h1 id="printSpringHeading">Årsplan</h1>
+            <div class="print-subtitle">Januar–juni</div>
           </div>
           <table class="print-table">
             <thead>
               <tr>
                 <th>Uke</th>
+                <th>Dato</th>
                 <th>Trinn</th>
-                <th>Fag</th>
                 <th>Hovedtema</th>
-                <th>Undertema / ferie</th>
+                <th>Undertema / aktivitet</th>
               </tr>
             </thead>
             <tbody id="printSpringBody"></tbody>
@@ -480,7 +507,10 @@ data.plans=data.plans.map(p=>({
   holiday:p.holiday||"",
   mainTopic:p.mainTopic||p.topic||"",
   subTopic:p.subTopic||"",
-  grade:p.grade||""
+  grade:p.grade||"",
+  date:p.date||"",
+  assessmentType:p.assessmentType||"",
+  assessmentTitle:p.assessmentTitle||""
 }));
 for(const p of data.plans){
   if(!p.grade || !p.subject) continue;
@@ -649,12 +679,14 @@ function updatePlanSubjects(){
   const grade=document.getElementById("planGrade").value;
   fill("planSubject",gradeSubjects(grade),"Velg fag");
   updatePlanMain();
+  updateAssessmentMain();
 }
 function updatePlanMain(){
   const grade=document.getElementById("planGrade").value;
   const subject=document.getElementById("planSubject").value;
   fill("planMain",Object.keys(gradeTopics(grade,subject)).sort((a,b)=>a.localeCompare(b,"nb")),"Velg hovedtema");
   updatePlanSub();
+  updateAssessmentMain();
 }
 function updatePlanSub(){
   const grade=document.getElementById("planGrade").value;
@@ -662,25 +694,62 @@ function updatePlanSub(){
   const main=document.getElementById("planMain").value;
   fill("planSub",(gradeTopics(grade,subject)[main]||[]).slice().sort((a,b)=>a.localeCompare(b,"nb")),"Velg undertema");
 }
+function formatShortDate(value){
+  if(!value) return "";
+  const [y,m,d]=value.split("-");
+  return `${d}.${m}.`;
+}
+function updateAssessmentMain(){
+  const grade=document.getElementById("planGrade").value;
+  const subject=document.getElementById("planSubject").value;
+  fill("assessmentMain",Object.keys(gradeTopics(grade,subject)).sort((a,b)=>a.localeCompare(b,"nb")),"Velg hovedtema");
+}
 function togglePlanType(){
-  const holiday=document.getElementById("planType").value==="holiday";
-  document.getElementById("teachingFields").style.display=holiday?"none":"grid";
-  document.getElementById("holidayFields").style.display=holiday?"block":"none";
+  const type=document.getElementById("planType").value;
+  document.getElementById("planWeekFields").style.display=type==="assessment"?"none":"grid";
+  document.getElementById("teachingFields").style.display=type==="teaching"?"grid":"none";
+  document.getElementById("holidayFields").style.display=type==="holiday"?"block":"none";
+  document.getElementById("assessmentFields").style.display=type==="assessment"?"block":"none";
+  if(type==="assessment") updateAssessmentMain();
 }
 document.getElementById("savePlanBtn").addEventListener("click",()=>{
   const grade=document.getElementById("planGrade").value;
   const subject=document.getElementById("planSubject").value;
   const type=document.getElementById("planType").value;
-  const from=Number(document.getElementById("planFrom").value);
-  const to=Number(document.getElementById("planTo").value);
-  if(!grade||!subject||!from||!to) return alert("Fyll inn trinn, fag og uke.");
-  if(to<from) return alert("Til-uke kan ikke være før fra-uke.");
-  const main=document.getElementById("planMain").value;
-  const sub=document.getElementById("planSub").value;
-  const holiday=document.getElementById("planHoliday").value;
-  if(type==="teaching" && (!main||!sub)) return alert("Velg hovedtema og undertema.");
-  data.plans.push({id:Date.now(),grade,subject,type,from,to,mainTopic:type==="teaching"?main:"",subTopic:type==="teaching"?sub:"",holiday:type==="holiday"?holiday:""});
-  saveData();renderAll();
+  if(!grade||!subject) return alert("Velg trinn og fag.");
+
+  if(type==="assessment"){
+    const date=document.getElementById("assessmentDate").value;
+    const assessmentType=document.getElementById("assessmentType").value;
+    const main=document.getElementById("assessmentMain").value;
+    const title=document.getElementById("assessmentTitle").value.trim();
+    if(!date||!main||!title) return alert("Velg dato og hovedtema, og skriv inn navn på vurderingen.");
+    const week=isoWeek(new Date(date+"T12:00:00"));
+    data.plans.push({
+      id:Date.now(),grade,subject,type,
+      from:week,to:week,date,
+      mainTopic:main,subTopic:"",
+      assessmentType,assessmentTitle:title,holiday:""
+    });
+    document.getElementById("assessmentTitle").value="";
+  }else{
+    const from=Number(document.getElementById("planFrom").value);
+    const to=Number(document.getElementById("planTo").value);
+    if(!from||!to) return alert("Fyll inn uke.");
+    if(to<from) return alert("Til-uke kan ikke være før fra-uke.");
+    const main=document.getElementById("planMain").value;
+    const sub=document.getElementById("planSub").value;
+    const holiday=document.getElementById("planHoliday").value;
+    if(type==="teaching" && (!main||!sub)) return alert("Velg hovedtema og undertema.");
+    data.plans.push({
+      id:Date.now(),grade,subject,type,from,to,date:"",
+      mainTopic:type==="teaching"?main:"",
+      subTopic:type==="teaching"?sub:"",
+      holiday:type==="holiday"?holiday:"",
+      assessmentType:"",assessmentTitle:""
+    });
+  }
+  saveData();renderAll();togglePlanType();
 });
 document.getElementById("printBtn").addEventListener("click",()=>{renderPrintPlan();window.print();});
 
@@ -707,14 +776,23 @@ function renderPrintPlan(){
   const rowHtml=p=>`
     <tr>
       <td>Uke ${p.from}${p.to!==p.from?"–"+p.to:""}</td>
+      <td>${p.type==="assessment" ? esc(formatShortDate(p.date)) : ""}</td>
       <td>${esc(p.grade||"")}</td>
-      <td>${esc(p.subject||"")}</td>
-      <td>${p.type==="holiday" ? "Ferie / fri" : esc(p.mainTopic||"")}</td>
-      <td>${p.type==="holiday" ? esc(p.holiday||"") : esc(p.subTopic||"")}</td>
+      <td>${p.type==="holiday" ? "Ferie / fri" : p.type==="assessment" ? esc(p.mainTopic||"Vurdering") : esc(p.mainTopic||"")}</td>
+      <td>${p.type==="holiday" ? esc(p.holiday||"") : p.type==="assessment" ? `<strong>${esc(p.assessmentType||"Vurdering")}</strong> – ${esc(p.assessmentTitle||"")}` : esc(p.subTopic||"")}</td>
     </tr>`;
 
   const autumnRows=sorted.filter(p=>semesterForWeek(p.from)==="autumn");
   const springRows=sorted.filter(p=>semesterForWeek(p.from)==="spring");
+
+  const selectedSubject=document.getElementById("planSubject")?.value || "";
+  const subjects=[...new Set(sorted.map(p=>p.subject).filter(Boolean))];
+  const subjectName=selectedSubject || (subjects.length===1 ? subjects[0] : "");
+  const heading=subjectName ? `Årsplan – ${subjectName}` : "Årsplan";
+  const autumnHeading=document.getElementById("printAutumnHeading");
+  const springHeading=document.getElementById("printSpringHeading");
+  if(autumnHeading) autumnHeading.textContent=heading;
+  if(springHeading) springHeading.textContent=heading;
 
   autumn.innerHTML=autumnRows.length ? autumnRows.map(rowHtml).join("") :
     '<tr><td colspan="5">Ingen årsplanpunkter registrert for august–desember.</td></tr>';
@@ -735,7 +813,11 @@ function renderPlans(){
       <div><strong>Uke ${p.from}${p.to!==p.from?"–"+p.to:""}</strong></div>
       <div>
         <strong>${esc(p.grade)} · ${esc(p.subject)}</strong><br>
-        <span class="muted">${p.type==="holiday"?esc(p.holiday):`${esc(p.mainTopic)} → ${esc(p.subTopic)}`}</span>
+        <span class="muted">${
+          p.type==="holiday" ? esc(p.holiday) :
+          p.type==="assessment" ? `${esc(formatShortDate(p.date))} ${esc(p.assessmentTitle||p.assessmentType||"Vurdering")}` :
+          `${esc(p.mainTopic)} → ${esc(p.subTopic)}`
+        }</span>
       </div>
       <button class="secondary" onclick="editPlan(${p.id})">Rediger</button>
       <button class="secondary" onclick="removePlan(${p.id})">Slett</button>
@@ -744,15 +826,24 @@ function renderPlans(){
 window.removePlan=function(id){data.plans=data.plans.filter(p=>p.id!==id);saveData();renderAll()}
 window.editPlan=function(id){
   const p=data.plans.find(x=>x.id===id); if(!p)return;
-  const from=prompt("Fra uke:",p.from); if(from===null)return;
-  const to=prompt("Til uke:",p.to); if(to===null)return;
-  p.from=Number(from); p.to=Number(to);
-  if(p.type==="holiday"){
-    const h=prompt("Ferie / fri:",p.holiday); if(h!==null)p.holiday=h.trim();
+  if(p.type==="assessment"){
+    const date=prompt("Dato (ÅÅÅÅ-MM-DD):",p.date||""); if(date===null)return;
+    const title=prompt("Navn / beskrivelse:",p.assessmentTitle||""); if(title===null)return;
+    p.date=date.trim();
+    p.from=isoWeek(new Date(p.date+"T12:00:00"));
+    p.to=p.from;
+    p.assessmentTitle=title.trim();
   }else{
-    const m=prompt("Hovedtema:",p.mainTopic); if(m===null)return;
-    const s=prompt("Undertema:",p.subTopic); if(s===null)return;
-    p.mainTopic=m.trim(); p.subTopic=s.trim();
+    const from=prompt("Fra uke:",p.from); if(from===null)return;
+    const to=prompt("Til uke:",p.to); if(to===null)return;
+    p.from=Number(from); p.to=Number(to);
+    if(p.type==="holiday"){
+      const h=prompt("Ferie / fri:",p.holiday); if(h!==null)p.holiday=h.trim();
+    }else{
+      const m=prompt("Hovedtema:",p.mainTopic); if(m===null)return;
+      const s=prompt("Undertema:",p.subTopic); if(s===null)return;
+      p.mainTopic=m.trim(); p.subTopic=s.trim();
+    }
   }
   saveData();renderAll();
 }

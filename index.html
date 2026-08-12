@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Læreroversikt v2.3</title>
+  <title>Læreroversikt v2.4</title>
   <meta name="theme-color" content="#1f4f46" />
   <style>
     :root{
@@ -199,7 +199,7 @@
       <h1>Læreroversikt</h1>
       <small>Planlegging, progresjon og oversikt</small>
     </div>
-    <div class="version">v2.3</div>
+    <div class="version">v2.4</div>
   </div>
 </header>
 
@@ -247,7 +247,7 @@
           </div>
           <div>
             <label>Undertema</label>
-            <select id="lessonSubTopic" onchange="renderLessonPlanLink()"></select>
+            <select id="lessonSubTopic"></select>
           </div>
         </div>
         <div style="margin-top:10px">
@@ -334,11 +334,15 @@
           </div>
         </div>
         <div id="teachingTopicRow" style="margin-top:10px">
-          <label>Hovedtema</label>
-          <input id="planMainTopic" placeholder="f.eks. Algebra" />
-          <div style="margin-top:10px">
-            <label>Undertema</label>
-            <select id="planSubTopicSelect"></select>
+          <div class="row">
+            <div>
+              <label>Hovedtema</label>
+              <select id="planMainTopicSelect" onchange="updatePlanSubTopicsFromSetup()"></select>
+            </div>
+            <div>
+              <label>Undertema</label>
+              <select id="planSubTopicSelect"></select>
+            </div>
           </div>
         </div>
         <button class="primary" style="margin-top:10px" onclick="savePlan()">Legg til</button>
@@ -642,27 +646,17 @@ function updateLessonWeekAndPlan(){
 function updateLessonSubTopics(){
   const cls=document.getElementById("lessonClass")?.value||"";
   const subject=document.getElementById("lessonSubject")?.value||"";
+  const grade=classGrade(cls);
   const main=document.getElementById("lessonMainTopic")?.value||"";
-  const subEl=document.getElementById("lessonSubTopic");
-  if(!subEl) return;
+  const subs=(data.setup.gradeTopics?.[grade]?.[subject]?.[main] || []).slice();
 
-  const entries=planEntriesFor(cls,subject).filter(p => (p.mainTopic || p.topic || "") === main);
+  fillSelect("lessonSubTopic",subs,"Velg undertema");
+
+  // Foreslå undertemaet i årsplanen for aktuell uke dersom det finnes.
   const week=isoWeek(lessonDateObject());
-  const old=subEl.value;
-
-  subEl.innerHTML='<option value="">Velg undertema</option>' +
-    entries.map(p=>{
-      const sub = p.subTopic || "";
-      const period=p.from===p.to ? `Uke ${p.from}` : `Uke ${p.from}–${p.to}`;
-      const current=week>=Number(p.from) && week<=Number(p.to);
-      return `<option value="${escapeAttr(sub)}">${current?"NÅ · ":""}${period} · ${escapeHtml(sub)}</option>`;
-    }).join("");
-
   const planned=planForWeek(cls,subject,week);
-  if(planned && (planned.mainTopic || planned.topic || "")===main && planned.subTopic){
-    subEl.value=planned.subTopic;
-  } else if([...subEl.options].some(o=>o.value===old)){
-    subEl.value=old;
+  if(planned?.mainTopic===main && planned?.subTopic && subs.includes(planned.subTopic)){
+    document.getElementById("lessonSubTopic").value=planned.subTopic;
   }
 
   renderLessonPlanLink();
@@ -736,38 +730,41 @@ function refreshSetupDrivenSelects(){
 
   updateLessonSubjects();
   updateLostSubjects();
+  updatePlanMainTopicsFromSetup();
   renderSetupLists();
   renderGradeTopicSetup();
 }
 function updateLessonSubjects(){
-  const cls=document.getElementById("lessonClass").value;
-  fillSelect("lessonSubject",subjectsFor(cls),"Velg fag");
+  const cls=document.getElementById("lessonClass")?.value||"";
+  const grade=classGrade(cls);
+  const subjects=(data.setup.gradeSubjects?.[grade] || []).slice().sort((a,b)=>a.localeCompare(b,"nb"));
+
+  fillSelect("lessonSubject",subjects,"Velg fag");
   updateLessonTopics();
-  renderLessonPlanLink();
 }
 function updateLessonTopics(){
-  const cls=document.getElementById("lessonClass").value;
-  const subject=document.getElementById("lessonSubject").value;
-  const mainEl=document.getElementById("lessonMainTopic");
-  if(!mainEl) return;
+  const cls=document.getElementById("lessonClass")?.value||"";
+  const subject=document.getElementById("lessonSubject")?.value||"";
+  const grade=classGrade(cls);
+  const groups=data.setup.gradeTopics?.[grade]?.[subject] || {};
+  const mains=Object.keys(groups).sort((a,b)=>a.localeCompare(b,"nb"));
 
-  const entries=planEntriesFor(cls,subject);
+  fillSelect("lessonMainTopic",mains,"Velg hovedtema");
+
+  // Foreslå temaet i årsplanen for aktuell uke dersom det finnes.
   const week=isoWeek(lessonDateObject());
-  const mains=[...new Set(entries.map(p=>p.mainTopic || p.topic || "").filter(Boolean))];
-
-  mainEl.innerHTML='<option value="">Velg hovedtema</option>' +
-    mains.map(t=>`<option value="${escapeAttr(t)}">${escapeHtml(t)}</option>`).join("");
-
   const planned=planForWeek(cls,subject,week);
-  if(planned){
-    mainEl.value=planned.mainTopic || planned.topic || "";
+  if(planned?.mainTopic && mains.includes(planned.mainTopic)){
+    document.getElementById("lessonMainTopic").value=planned.mainTopic;
   }
 
   updateLessonSubTopics();
 }
 function updateLostSubjects(){
-  const cls=document.getElementById("lostClass").value;
-  fillSelect("lostSubject",subjectsFor(cls),"Velg fag");
+  const cls=document.getElementById("lostClass")?.value||"";
+  const grade=classGrade(cls);
+  const subjects=(data.setup.gradeSubjects?.[grade] || []).slice().sort((a,b)=>a.localeCompare(b,"nb"));
+  fillSelect("lostSubject",subjects,"Velg fag");
 }
 
 function gradeSubjects(grade){
@@ -948,12 +945,10 @@ function printAnnualPlan(){ window.print(); }
 function updatePlanMainTopicsFromSetup(){
   const grade=document.getElementById("planGrade")?.value||"";
   const subject=document.getElementById("planSubject")?.value||"";
-  const mainEl=document.getElementById("planMainTopicSelect");
-  const subEl=document.getElementById("planSubTopicSelect");
-  if(!mainEl || !subEl) return;
-
   const groups=data.setup.gradeTopics?.[grade]?.[subject] || {};
-  fillSelect("planMainTopicSelect",Object.keys(groups).sort((a,b)=>a.localeCompare(b,"nb")),"Velg hovedtema");
+  const mains=Object.keys(groups).sort((a,b)=>a.localeCompare(b,"nb"));
+
+  fillSelect("planMainTopicSelect",mains,"Velg hovedtema");
   updatePlanSubTopicsFromSetup();
 }
 function updatePlanSubTopicsFromSetup(){
@@ -961,6 +956,7 @@ function updatePlanSubTopicsFromSetup(){
   const subject=document.getElementById("planSubject")?.value||"";
   const main=document.getElementById("planMainTopicSelect")?.value||"";
   const subs=(data.setup.gradeTopics?.[grade]?.[subject]?.[main] || []).slice();
+
   fillSelect("planSubTopicSelect",subs,"Velg undertema");
 }
 
@@ -970,13 +966,13 @@ function savePlan(){
   const from=Number(planFrom.value);
   const to=Number(planTo.value);
   const type=document.getElementById("planType").value;
-  const mainTopic=document.getElementById("planMainTopicSelect").value;
-  const subTopic=document.getElementById("planSubTopicSelect").value;
+  const mainTopic=document.getElementById("planMainTopicSelect")?.value||"";
+  const subTopic=document.getElementById("planSubTopicSelect")?.value||"";
   const holiday=document.getElementById("planHoliday").value;
 
   if(!grade||!subject||!from||!to) return alert("Fyll inn trinn, fag og uke.");
   if(to<from) return alert("Til-uke kan ikke være før fra-uke.");
-  if(type==="teaching" && (!mainTopic||!subTopic)) return alert("Fyll inn hovedtema og undertema.");
+  if(type==="teaching" && (!mainTopic||!subTopic)) return alert("Velg hovedtema og undertema.");
 
   data.plans.push({
     id:Date.now(),subject,grade,from,to,type,
@@ -987,8 +983,9 @@ function savePlan(){
   });
 
   document.getElementById("planMainTopicSelect").value="";
-  document.getElementById("planSubTopicSelect").value="";
-  planFrom.value=""; planTo.value="";
+  updatePlanSubTopicsFromSetup();
+  planFrom.value="";
+  planTo.value="";
   document.getElementById("planType").value="teaching";
   togglePlanType();
   persist();

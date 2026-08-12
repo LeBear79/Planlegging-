@@ -4,200 +4,70 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Læreroversikt v2.5</title>
-  <meta name="theme-color" content="#1f4f46" />
+  <meta name="theme-color" content="#245b50" />
   <style>
     :root{
-      --bg:#f4f6f5;
-      --card:#ffffff;
-      --text:#1f2a27;
-      --muted:#6b7773;
-      --primary:#1f4f46;
-      --primary-2:#2f6d61;
-      --border:#dfe6e3;
-      --good:#dff3e8;
-      --warn:#fff0c9;
-      --bad:#fde0de;
-      --shadow:0 8px 24px rgba(20,50,44,.08);
-      --radius:18px;
+      --bg:#f4f7f6; --card:#fff; --text:#1f2d2a; --muted:#6c7975;
+      --primary:#245b50; --soft:#e7efed; --border:#dce5e2;
+      --shadow:0 8px 24px rgba(25,60,52,.07); --radius:18px;
+      --holiday:#f7f0df; --danger:#f4e7e5;
     }
     *{box-sizing:border-box}
-    body{
-      margin:0;
-      font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-      background:var(--bg);
-      color:var(--text);
-    }
-    header{
-      position:sticky; top:0; z-index:10;
-      background:rgba(244,246,245,.94);
-      backdrop-filter:blur(10px);
-      border-bottom:1px solid var(--border);
-    }
-    .topbar{
-      max-width:1100px; margin:auto; padding:14px 18px;
-      display:flex; align-items:center; justify-content:space-between; gap:12px;
-    }
-    .brand h1{font-size:1.25rem;margin:0}
-    .brand small{color:var(--muted)}
-    .version{
-      font-size:.8rem; color:var(--muted); border:1px solid var(--border);
-      padding:5px 9px; border-radius:999px; background:#fff;
-    }
-    main{max-width:1100px;margin:auto;padding:18px}
-    .tabs{
-      display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:18px;
-    }
-    .tab-btn{
-      border:0; border-radius:14px; padding:12px 10px; font-weight:700;
-      background:#e7ecea; color:var(--text); cursor:pointer;
-    }
+    body{margin:0;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text)}
+    header{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.96);border-bottom:1px solid var(--border);backdrop-filter:blur(8px)}
+    .topbar{max-width:1120px;margin:auto;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+    h1{margin:0;font-size:1.3rem}.subtitle{color:var(--muted);font-size:.9rem;margin-top:2px}
+    .version{border:1px solid var(--border);border-radius:999px;padding:6px 10px;color:var(--muted);font-size:.82rem;background:#fff}
+    main{max-width:1120px;margin:auto;padding:18px}
+    .tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
+    .tab-btn{border:0;border-radius:14px;padding:13px 10px;font-weight:800;background:#e7ecea;color:var(--text);cursor:pointer}
     .tab-btn.active{background:var(--primary);color:#fff}
-    .panel{display:none}
-    .panel.active{display:block}
-    .grid{display:grid;gap:14px}
-    .grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}
-    .card{
-      background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
-      padding:16px; box-shadow:var(--shadow);
-    }
-    h2,h3{margin:0 0 12px}
+    .panel{display:none}.panel.active{display:block}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;margin-bottom:14px}
+    .grid{display:grid;gap:14px}.grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}.grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+    h2{margin:0 0 12px;font-size:1.25rem} h3{margin:0 0 10px;font-size:1rem}
+    label{display:block;font-size:.88rem;font-weight:800;margin-bottom:6px}
+    input,select,textarea{width:100%;border:1px solid #ccd8d4;border-radius:12px;padding:11px 12px;font:inherit;background:#fff;color:var(--text)}
+    textarea{min-height:78px;resize:vertical}
+    .row{display:flex;gap:10px;align-items:end}.row>*{flex:1}
+    button.primary,button.secondary,button.danger{border:0;border-radius:12px;padding:10px 13px;font-weight:800;cursor:pointer}
+    button.primary{background:var(--primary);color:#fff}.secondary{background:var(--soft);color:var(--text)}.danger{background:var(--danger);color:#7a2e27}
     .muted{color:var(--muted)}
-    label{display:block;font-size:.88rem;font-weight:700;margin-bottom:6px}
-    input,select,textarea{
-      width:100%; border:1px solid #cfd9d5; border-radius:12px;
-      padding:11px 12px; font:inherit; background:#fff; color:var(--text);
-    }
-    textarea{min-height:88px;resize:vertical}
-    .row{display:flex;gap:10px;align-items:end}
-    .row > *{flex:1}
-    button.primary,.small-btn{
-      border:0; background:var(--primary); color:#fff; border-radius:12px;
-      padding:11px 14px; font-weight:700; cursor:pointer;
-    }
-    .small-btn{padding:8px 10px;font-size:.85rem}
-    .secondary{background:#e9efed!important;color:var(--text)!important}
-    .danger{background:#8b2f2b!important}
-    .progress-list{display:grid;gap:10px}
-    .progress-item{
-      border:1px solid var(--border); border-radius:14px; padding:13px;
-      display:grid; grid-template-columns:1.2fr 1fr 1fr auto; gap:10px; align-items:center;
-    }
-    .status{
-      padding:6px 10px; border-radius:999px; font-size:.8rem; font-weight:800; white-space:nowrap;
-    }
-    .status.good{background:var(--good);color:#215b3d}
-    .status.warn{background:var(--warn);color:#7a5a00}
-    .status.bad{background:var(--bad);color:#8b2f2b}
-    .lesson-log{display:grid;gap:8px;margin-top:10px}
-    .log-item{
-      border-left:4px solid var(--primary-2); background:#f8faf9; padding:10px 12px; border-radius:10px;
-    }
-    .plan-item{
-      display:grid; grid-template-columns:110px 1fr auto; gap:10px; align-items:center;
-      border-bottom:1px solid var(--border); padding:10px 0;
-    }
-    .plan-item:last-child{border-bottom:0}
-    .quick-tags{display:flex;flex-wrap:wrap;gap:8px}
-    .tag{
-      border:1px solid #cfd9d5; border-radius:999px; padding:8px 10px;
-      background:#fff; cursor:pointer; font-size:.86rem;
-    }
-    .tag.active{background:var(--primary);color:#fff;border-color:var(--primary)}
-    .student-card{border:1px solid var(--border);border-radius:14px;padding:12px;margin-top:10px}
-    .student-head{display:flex;gap:10px;align-items:center;justify-content:space-between}
-    .student-head strong{font-size:1rem}
-    .student-status{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
-    .student-status button{
-      border:1px solid #cfd9d5; background:#fff; padding:7px 9px; border-radius:10px; cursor:pointer;
-    }
-    .student-status button.active{background:var(--primary);color:#fff;border-color:var(--primary)}
-    .student-notes{display:none;margin-top:10px}
-    .student-card.open .student-notes{display:block}
+    .hint{background:#f8faf9;border:1px solid var(--border);border-radius:12px;padding:11px 12px;color:var(--muted);font-size:.9rem}
+    .list-row{display:grid;grid-template-columns:120px 1fr auto auto;gap:10px;align-items:center;padding:11px 0;border-bottom:1px solid var(--border)}
+    .list-row:last-child{border-bottom:0}
+    .pill{display:inline-flex;align-items:center;gap:5px;background:var(--soft);border:1px solid var(--border);border-radius:999px;padding:6px 9px;margin:3px 5px 3px 0;font-size:.84rem}
+    .holiday{background:var(--holiday);border-left:5px solid #b79a55;padding-left:12px}
     .stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-    .stat{padding:14px;border-radius:14px;background:#f8faf9;border:1px solid var(--border)}
-    .stat b{display:block;font-size:1.35rem}
-    .empty{padding:18px;text-align:center;color:var(--muted)}
-
-    .plan-link-box{
-      margin-top:10px;padding:12px 14px;border:1px solid var(--border);
-      border-radius:12px;background:#f8faf9;
-    }
-    .plan-link-box strong{display:block;margin-bottom:3px}
-    .week-badge{
-      display:inline-flex;align-items:center;justify-content:center;
-      min-width:74px;padding:8px 11px;border-radius:12px;
-      background:#e7efec;font-weight:800;color:var(--primary);
-    }
-
-
-    .compact-info{
-      min-height:auto!important;
-      padding:14px 16px!important;
-      display:flex;
-      flex-direction:column;
-      gap:5px;
-    }
-    .edit-row{
-      display:grid;
-      grid-template-columns:110px 1fr auto auto;
-      gap:10px;
-      align-items:center;
-      border-bottom:1px solid var(--border);
-      padding:10px 0;
-    }
+    .stat{border:1px solid var(--border);background:#f8faf9;border-radius:14px;padding:14px}.stat b{display:block;font-size:1.35rem}
+    .empty{text-align:center;color:var(--muted);padding:18px}
+    .lesson-card{border:1px solid var(--border);border-radius:14px;padding:13px;margin-top:10px;background:#fbfcfc}
+    .lesson-card strong{display:block}
     .print-only{display:none}
+    @media(max-width:780px){
+      .tabs{grid-template-columns:1fr 1fr}.grid.two,.grid.three{grid-template-columns:1fr}.row{flex-direction:column;align-items:stretch}.list-row{grid-template-columns:1fr}.stat-grid{grid-template-columns:1fr}
+    }
     @media print{
       body{background:#fff}
-      header,.tabs,.no-print,.compact-info{display:none!important}
+      header,.tabs,.no-print{display:none!important}
       main{max-width:none;padding:0}
       .panel{display:none!important}
       #arsplan{display:block!important}
-      #arsplan>.grid{display:none!important}
-      #arsplan>.card{box-shadow:none;border:0;padding:0}
+      #arsplan .entry-card{display:none!important}
+      #arsplan .card{box-shadow:none;border:0;padding:0}
       .print-only{display:block!important}
-      #planList .edit-row{
-        grid-template-columns:120px 1fr;
-        break-inside:avoid;
-      }
+      #planList .list-row{grid-template-columns:120px 1fr;break-inside:avoid}
       #planList button{display:none!important}
-    }
-
-    .plan-type-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
-    .holiday-row{background:#f8f3e8;border-left:5px solid #b99a55;padding-left:12px}
-    .holiday-label{font-weight:800;color:#725f2d}
-    .print-only{display:none}
-    @media print{
-      body{background:#fff}
-      header,.tabs,.no-print,.compact-info{display:none!important}
-      main{max-width:none;padding:0}
-      .panel{display:none!important}
-      #arsplan{display:block!important}
-      #arsplan>.grid{display:none!important}
-      #arsplan>.card{box-shadow:none;border:0;padding:0}
-      .print-only{display:block!important}
-      #planList .edit-row{grid-template-columns:120px 1fr;break-inside:avoid}
-      #planList button{display:none!important}
-      .holiday-row{background:#fff!important;border-left:4px solid #999}
-    }
-    .privacy{
-      font-size:.82rem;color:var(--muted);margin-top:14px;line-height:1.45
-    }
-    @media(max-width:760px){
-      .grid.two{grid-template-columns:1fr}
-      .progress-item{grid-template-columns:1fr}
-      .row{flex-direction:column;align-items:stretch}
-      .tabs{grid-template-columns:1fr 1fr}
-      .tab-btn{font-size:.82rem}
-      .stat-grid{grid-template-columns:1fr}
+      .holiday{background:#fff!important;border-left:4px solid #999}
     }
   </style>
 </head>
 <body>
 <header>
   <div class="topbar">
-    <div class="brand">
+    <div>
       <h1>Læreroversikt</h1>
-      <small>Planlegging, progresjon og oversikt</small>
+      <div class="subtitle">Planlegging, progresjon og oversikt</div>
     </div>
     <div class="version">v2.5</div>
   </div>
@@ -215,39 +85,34 @@
     <div class="grid two">
       <div class="card">
         <h2>Registrer undervisningstime</h2>
-        <p class="muted">Velg først hovedtema. Undertema-listen viser deretter bare undertemaene som hører til dette hovedtemaet i årsplanen.</p>
-        <div class="row">
+        <div class="grid two">
           <div>
             <label>Klasse</label>
-            <select id="lessonClass" onchange="updateLessonSubjects()"></select>
+            <select id="lessonClass"></select>
           </div>
           <div>
             <label>Fag</label>
-            <select id="lessonSubject" onchange="updateLessonTopics()"></select>
+            <select id="lessonSubject"></select>
           </div>
         </div>
-        <div class="row" style="margin-top:10px">
+        <div class="grid two" style="margin-top:10px">
           <div>
             <label>Dato</label>
-            <input id="lessonDate" type="date" onchange="updateLessonWeekAndPlan()" />
+            <input id="lessonDate" type="date" />
           </div>
-          <div style="flex:0 0 130px">
-            <label>Ukenummer</label>
-            <div id="lessonWeekDisplay" class="week-badge">Uke –</div>
+          <div>
+            <label>Uke</label>
+            <input id="lessonWeek" type="number" min="1" max="53" />
           </div>
         </div>
-        <div id="lessonPlanLink" class="plan-link-box">
-          <strong>Planlagt denne uken</strong>
-          <span class="muted">Velg klasse og fag.</span>
-        </div>
-        <div class="row" style="margin-top:10px">
+        <div class="grid two" style="margin-top:10px">
           <div>
             <label>Hovedtema</label>
-            <select id="lessonMainTopic" onchange="updateLessonSubTopics()"></select>
+            <select id="lessonMain"></select>
           </div>
           <div>
             <label>Undertema</label>
-            <select id="lessonSubTopic"></select>
+            <select id="lessonSub"></select>
           </div>
         </div>
         <div style="margin-top:10px">
@@ -258,108 +123,88 @@
           <label>Kort notat</label>
           <textarea id="lessonNote" placeholder="Valgfritt"></textarea>
         </div>
-        <button class="primary" style="margin-top:10px" onclick="saveLesson()">Lagre time</button>
+        <button class="primary" style="margin-top:10px" id="saveLessonBtn">Lagre time</button>
       </div>
 
       <div class="card">
         <h2>Dagens oversikt</h2>
         <div class="stat-grid">
-          <div class="stat"><span class="muted">Klasser registrert</span><b id="statClasses">0</b></div>
+          <div class="stat"><span class="muted">Klasser</span><b id="statClasses">0</b></div>
           <div class="stat"><span class="muted">Årsplanpunkter</span><b id="statPlans">0</b></div>
-          <div class="stat"><span class="muted">Mistet timer</span><b id="statLost">0</b></div>
+          <div class="stat"><span class="muted">Mistet</span><b id="statLost">0 t</b></div>
         </div>
-        <p class="privacy">Data i denne versjonen lagres lokalt i nettleseren på enheten. Det sendes ikke noe til en server.</p>
       </div>
     </div>
 
-    <div class="card" style="margin-top:14px">
-      <h2>Progresjon</h2>
-      <div id="progressList" class="progress-list"></div>
-    </div>
-
-    <div class="card" style="margin-top:14px">
-      <h2>Siste undervisningstimer</h2>
-      <div id="lessonLog" class="lesson-log"></div>
+    <div class="card">
+      <h2>Siste registreringer</h2>
+      <div id="lessonList"></div>
     </div>
   </section>
 
   <section id="arsplan" class="panel">
-    <div class="grid two">
-      <div class="card">
-        <h2>Legg til i årsplan</h2>
-        <div class="row">
-          <div>
-            <label>Fag</label>
-            <select id="planSubject" onchange="updatePlanMainTopicsFromSetup()"></select>
-          </div>
-          <div>
-            <label>Trinn</label>
-            <select id="planGrade" onchange="updatePlanSubjectsFromSetup()">
-              <option value="">Velg trinn</option>
-              <option>8. trinn</option>
-              <option>9. trinn</option>
-              <option>10. trinn</option>
-            </select>
-          </div>
+    <div class="card entry-card">
+      <h2>Legg til i årsplan</h2>
+      <div class="grid three">
+        <div>
+          <label>Trinn</label>
+          <select id="planGrade"></select>
         </div>
-        <div class="row" style="margin-top:10px">
-          <div>
-            <label>Fra uke</label>
-            <input id="planFrom" type="number" min="1" max="53" />
-          </div>
-          <div>
-            <label>Til uke</label>
-            <input id="planTo" type="number" min="1" max="53" />
-          </div>
+        <div>
+          <label>Fag</label>
+          <select id="planSubject"></select>
         </div>
-        <div class="plan-type-row">
-          <div>
-            <label>Type</label>
-            <select id="planType" onchange="togglePlanType()">
-              <option value="teaching">Undervisning</option>
-              <option value="holiday">Ferie / fri</option>
-            </select>
-          </div>
-          <div id="holidayWrap" style="display:none">
-            <label>Ferie</label>
-            <select id="planHoliday">
-              <option>Høstferie</option>
-              <option>Juleferie</option>
-              <option>Vinterferie</option>
-              <option>Påskeferie</option>
-              <option>Sommerferie</option>
-              <option>Planleggingsdag</option>
-              <option>Annet</option>
-            </select>
-          </div>
+        <div>
+          <label>Type</label>
+          <select id="planType">
+            <option value="teaching">Undervisning</option>
+            <option value="holiday">Ferie / fri</option>
+          </select>
         </div>
-        <div id="teachingTopicRow" style="margin-top:10px">
-          <div class="row">
-            <div>
-              <label>Hovedtema</label>
-              <select id="planMainTopicSelect" onchange="updatePlanSubTopicsFromSetup()"></select>
-            </div>
-            <div>
-              <label>Undertema</label>
-              <select id="planSubTopicSelect"></select>
-            </div>
-          </div>
-        </div>
-        <button class="primary" style="margin-top:10px" onclick="savePlan()">Legg til</button>
       </div>
 
-      <div class="card compact-info">
-        <strong>Kobling til enkelttimer</strong>
-        <span class="muted">Årsplanen lages på trinnnivå. Du kan registrere både undervisning og ferie/fridager.</span>
+      <div class="grid two" style="margin-top:10px">
+        <div>
+          <label>Fra uke</label>
+          <input id="planFrom" type="number" min="1" max="53" />
+        </div>
+        <div>
+          <label>Til uke</label>
+          <input id="planTo" type="number" min="1" max="53" />
+        </div>
       </div>
+
+      <div id="teachingFields" class="grid two" style="margin-top:10px">
+        <div>
+          <label>Hovedtema</label>
+          <select id="planMain"></select>
+        </div>
+        <div>
+          <label>Undertema</label>
+          <select id="planSub"></select>
+        </div>
+      </div>
+
+      <div id="holidayFields" style="display:none;margin-top:10px">
+        <label>Ferie / fri</label>
+        <select id="planHoliday">
+          <option>Høstferie</option>
+          <option>Juleferie</option>
+          <option>Vinterferie</option>
+          <option>Påskeferie</option>
+          <option>Sommerferie</option>
+          <option>Planleggingsdag</option>
+          <option>Annet</option>
+        </select>
+      </div>
+
+      <button class="primary" style="margin-top:10px" id="savePlanBtn">Legg til</button>
     </div>
 
-    <div class="card" style="margin-top:14px">
+    <div class="card">
       <div class="row no-print" style="align-items:center;margin-bottom:8px">
         <div><h2 style="margin:0">Årsplan</h2></div>
-        <div style="flex:0 0 auto">
-          <button class="primary" onclick="printAnnualPlan()">Lag PDF / skriv ut</button>
-        </div>
+        <div style="flex:0 0 auto"><button class="primary" id="printBtn">Lag PDF / skriv ut</button></div>
       </div>
       <h2 class="print-only">Årsplan</h2>
       <div id="planList"></div>
@@ -370,17 +215,17 @@
     <div class="grid two">
       <div class="card">
         <h2>Registrer mistet undervisning</h2>
-        <div class="row">
+        <div class="grid two">
           <div>
             <label>Klasse</label>
-            <select id="lostClass" onchange="updateLostSubjects()"></select>
+            <select id="lostClass"></select>
           </div>
           <div>
             <label>Fag</label>
             <select id="lostSubject"></select>
           </div>
         </div>
-        <div class="row" style="margin-top:10px">
+        <div class="grid two" style="margin-top:10px">
           <div>
             <label>Dato</label>
             <input id="lostDate" type="date" />
@@ -397,15 +242,11 @@
             <option>Tur / aktivitetsdag</option>
             <option>Skolearrangement</option>
             <option>Prøve / kartlegging</option>
-            <option>Fridag / planleggingsdag</option>
+            <option>Planleggingsdag</option>
             <option>Annet</option>
           </select>
         </div>
-        <div style="margin-top:10px">
-          <label>Kort notat</label>
-          <input id="lostNote" placeholder="Valgfritt" />
-        </div>
-        <button class="primary" style="margin-top:10px" onclick="saveLostTime()">Registrer mistet time</button>
+        <button class="primary" style="margin-top:10px" id="saveLostBtn">Registrer</button>
       </div>
 
       <div class="card">
@@ -415,247 +256,210 @@
           <div class="stat"><span class="muted">Matematikk</span><b id="lostMath">0 t</b></div>
           <div class="stat"><span class="muted">Naturfag</span><b id="lostScience">0 t</b></div>
         </div>
-        <p class="muted" style="margin-top:12px">Oversikten summerer registrerte bortfall i denne nettleseren.</p>
       </div>
     </div>
 
-    <div class="grid two" style="margin-top:14px">
-      <div class="card">
-        <h2>Per klasse og fag</h2>
-        <div id="lostByClass"></div>
-      </div>
-      <div class="card">
-        <h2>Fordelt på årsak</h2>
-        <div id="lostByReason"></div>
-      </div>
-    </div>
-
-    <div class="card" style="margin-top:14px">
+    <div class="card">
       <h2>Registrerte bortfall</h2>
-      <div id="lostLog"></div>
+      <div id="lostList"></div>
     </div>
   </section>
 
-
   <section id="oppsett" class="panel">
-    <div class="card" style="margin-bottom:14px">
+    <div class="card">
       <h2>Oppsett</h2>
-      <p class="muted">Registrer klassene og koble dem til riktig trinn. Deretter registrerer du fag, hovedtema og undertema på trinnnivå.</p>
+      <div class="hint">1) Legg inn klasser og trinn. 2) Legg inn fag for trinnet. 3) Legg inn hovedtema og undertema for hvert fag. De samme temaene brukes deretter i årsplanen og når du registrerer enkelttimer.</div>
     </div>
 
     <div class="grid two">
       <div class="card">
         <h2>1. Klasser</h2>
-        <div class="row">
+        <div class="grid two">
           <div>
             <label>Ny klasse</label>
-            <input id="setupClassName" placeholder="f.eks. 9D" />
+            <input id="setupClass" placeholder="f.eks. 9D" />
           </div>
           <div>
             <label>Trinn</label>
-            <select id="setupClassGrade">
-              <option>8. trinn</option>
-              <option>9. trinn</option>
-              <option>10. trinn</option>
-            </select>
-          </div>
-          <div style="flex:0 0 auto">
-            <button class="primary" onclick="addSetupClass()">Legg til klasse</button>
+            <select id="setupClassGrade"></select>
           </div>
         </div>
-        <div id="setupClassList" style="margin-top:12px"></div>
+        <button class="primary" style="margin-top:10px" id="addClassBtn">Legg til klasse</button>
+        <div id="classList" style="margin-top:10px"></div>
       </div>
 
       <div class="card">
         <h2>2. Fag og temaer</h2>
-
         <div class="grid two">
           <div>
             <label>Trinn</label>
-            <select id="setupGradeForTopics" onchange="updateSetupGradeSubjects()">
-              <option value="">Velg trinn</option>
-              <option>8. trinn</option>
-              <option>9. trinn</option>
-              <option>10. trinn</option>
-            </select>
+            <select id="setupGrade"></select>
           </div>
           <div>
             <label>Fag</label>
-            <select id="setupGradeSubject" onchange="renderGradeTopicSetup()"></select>
+            <select id="setupSubject"></select>
           </div>
         </div>
 
         <div style="margin-top:10px">
           <label>Nytt fag</label>
           <div class="row">
-            <div><input id="setupNewSubject" placeholder="f.eks. Matematikk" /></div>
-            <div style="flex:0 0 auto"><button class="primary" onclick="addGradeSubject()">Legg til fag</button></div>
+            <input id="setupNewSubject" placeholder="f.eks. Matematikk" />
+            <button class="primary" style="flex:0 0 auto" id="addSubjectBtn">Legg til fag</button>
           </div>
         </div>
 
         <div class="grid two" style="margin-top:10px">
           <div>
             <label>Hovedtema</label>
-            <input id="setupMainTopic" placeholder="f.eks. Algebra" />
+            <input id="setupMain" placeholder="f.eks. Algebra" />
           </div>
           <div>
             <label>Undertema</label>
-            <input id="setupSubTopic" placeholder="f.eks. Trekke sammen uttrykk" />
+            <input id="setupSub" placeholder="f.eks. Trekke sammen uttrykk" />
           </div>
         </div>
-        <button class="primary" style="margin-top:10px" onclick="addGradeTopic()">Legg til tema</button>
+        <button class="primary" style="margin-top:10px" id="addTopicBtn">Legg til tema</button>
 
-        <div id="setupGradeTopicList" style="margin-top:12px"></div>
+        <div id="topicList" style="margin-top:12px"></div>
       </div>
     </div>
   </section>
-
 </main>
 
 <script>
-const QUICK_TAGS = [
-  "Jobber godt i timen",
-  "Jobber selvstendig",
-  "Trenger mye veiledning",
-  "Har lite fokus",
-  "Har god kontroll på utstyrsnavn",
-  "Er usikker på utstyrsnavn",
-  "Bruker utstyret sikkert",
-  "Trenger veiledning i bruk av utstyr",
-  "Forstår hensikten med forsøket",
-  "Gjør gode observasjoner",
-  "Forklarer resultatene godt",
-  "Trenger hjelp til å tolke resultatene"
-];
+const STORAGE_KEY = "laereroversikt_v1";
 
-let data = JSON.parse(localStorage.getItem("laereroversikt_v1")) || {
-  lessons: [],
-  plans: [],
-  classes: {},
-  labs: [],
-  lost: [],
-  setup: {classes:{}}
-};
-data.lessons ||= [];
-data.plans ||= [];
-data.plans = data.plans.map(p=>({...p,type:p.type||"teaching",holiday:p.holiday||""}));
-data.classes ||= {};
-data.labs ||= [];
-data.lost ||= [];
-data.setup ||= {classes:{}};
-data.setup.classes ||= {};
+function defaultData(){
+  return {
+    setup:{
+      grades:["8. trinn","9. trinn","10. trinn"],
+      classes:{},
+      classGrades:{},
+      gradeSubjects:{},
+      gradeTopics:{}
+    },
+    plans:[],
+    lessons:[],
+    lost:[]
+  };
+}
 
+let data;
+try{
+  const raw=JSON.parse(localStorage.getItem(STORAGE_KEY));
+  data=raw || defaultData();
+}catch(e){
+  data=defaultData();
+}
+
+data.setup ||= {};
 data.setup.grades ||= ["8. trinn","9. trinn","10. trinn"];
+data.setup.classes ||= {};
 data.setup.classGrades ||= {};
 data.setup.gradeSubjects ||= {};
 data.setup.gradeTopics ||= {};
+data.plans ||= [];
+data.lessons ||= [];
+data.lost ||= [];
 
-// Migrer eldre data automatisk til trinnbasert struktur.
-function inferGradeFromClassName(cls){
-  const m=String(cls||"").match(/(?:^|\D)(8|9|10)(?:\D|$)/);
+/* Migrer eldre oppsett */
+function inferGrade(cls){
+  const m=String(cls||"").match(/(8|9|10)/);
   return m ? `${m[1]}. trinn` : "";
 }
-
-// 1) Koble eldre klasser til trinn der det kan utledes av klassenavnet.
-for(const cls of Object.keys(data.setup.classes||{})){
+for(const cls of Object.keys(data.setup.classes)){
   if(!data.setup.classGrades[cls]){
-    const inferred=inferGradeFromClassName(cls);
-    if(inferred) data.setup.classGrades[cls]=inferred;
+    const g=inferGrade(cls);
+    if(g) data.setup.classGrades[cls]=g;
   }
 }
-
-// 2) Flytt eldre klassebaserte fag til trinnbaserte fag.
-for(const [cls,classData] of Object.entries(data.setup.classes||{})){
-  const grade=data.setup.classGrades[cls] || inferGradeFromClassName(cls);
+for(const [cls,info] of Object.entries(data.setup.classes)){
+  const grade=data.setup.classGrades[cls] || inferGrade(cls);
   if(!grade) continue;
-
-  const subjects=classData?.subjects || {};
+  const subjects=info?.subjects || {};
   data.setup.gradeSubjects[grade] ||= [];
   data.setup.gradeTopics[grade] ||= {};
-
   for(const [subject,legacyTopics] of Object.entries(subjects)){
-    if(!data.setup.gradeSubjects[grade].includes(subject)){
-      data.setup.gradeSubjects[grade].push(subject);
-    }
+    if(!data.setup.gradeSubjects[grade].includes(subject)) data.setup.gradeSubjects[grade].push(subject);
     data.setup.gradeTopics[grade][subject] ||= {};
-
-    // Eldre "tema"-lister hadde ikke undertema. Behold dem som hovedtema.
     if(Array.isArray(legacyTopics)){
-      for(const main of legacyTopics){
-        if(typeof main==="string" && main.trim()){
-          data.setup.gradeTopics[grade][subject][main] ||= [];
-        }
-      }
+      legacyTopics.forEach(main=>{
+        if(typeof main==="string" && main.trim()) data.setup.gradeTopics[grade][subject][main] ||= [];
+      });
+    }
+  }
+}
+data.plans=data.plans.map(p=>({
+  ...p,
+  type:p.type||"teaching",
+  holiday:p.holiday||"",
+  mainTopic:p.mainTopic||p.topic||"",
+  subTopic:p.subTopic||"",
+  grade:p.grade||""
+}));
+for(const p of data.plans){
+  if(!p.grade || !p.subject) continue;
+  data.setup.gradeSubjects[p.grade] ||= [];
+  if(!data.setup.gradeSubjects[p.grade].includes(p.subject)) data.setup.gradeSubjects[p.grade].push(p.subject);
+  if(p.mainTopic){
+    data.setup.gradeTopics[p.grade] ||= {};
+    data.setup.gradeTopics[p.grade][p.subject] ||= {};
+    data.setup.gradeTopics[p.grade][p.subject][p.mainTopic] ||= [];
+    if(p.subTopic && !data.setup.gradeTopics[p.grade][p.subject][p.mainTopic].includes(p.subTopic)){
+      data.setup.gradeTopics[p.grade][p.subject][p.mainTopic].push(p.subTopic);
     }
   }
 }
 
-// 3) Bruk eksisterende årsplan til å fylle grunnbasen med hoved- og undertema.
-for(const p of data.plans||[]){
-  const grade=p.grade || "";
-  const subject=p.subject || "";
-  const main=p.mainTopic || "";
-  const sub=p.subTopic || "";
-  if(!grade || !subject) continue;
-
-  data.setup.gradeSubjects[grade] ||= [];
-  if(!data.setup.gradeSubjects[grade].includes(subject)){
-    data.setup.gradeSubjects[grade].push(subject);
-  }
-
-  data.setup.gradeTopics[grade] ||= {};
-  data.setup.gradeTopics[grade][subject] ||= {};
-
-  if(main){
-    data.setup.gradeTopics[grade][subject][main] ||= [];
-    if(sub && !data.setup.gradeTopics[grade][subject][main].includes(sub)){
-      data.setup.gradeTopics[grade][subject][main].push(sub);
-    }
-  }
+function saveData(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
 
+function esc(s=""){
+  return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
+}
+function fill(id, values, placeholder="Velg..."){
+  const el=document.getElementById(id);
+  if(!el) return;
+  const old=el.value;
+  el.innerHTML=`<option value="">${placeholder}</option>`+values.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join("");
+  if(values.includes(old)) el.value=old;
+}
+function isoWeek(date=new Date()){
+  const d=new Date(Date.UTC(date.getFullYear(),date.getMonth(),date.getDate()));
+  const day=d.getUTCDay()||7;
+  d.setUTCDate(d.getUTCDate()+4-day);
+  const start=new Date(Date.UTC(d.getUTCFullYear(),0,1));
+  return Math.ceil((((d-start)/86400000)+1)/7);
+}
+function classNames(){return Object.keys(data.setup.classGrades).sort((a,b)=>a.localeCompare(b,"nb"))}
+function gradeSubjects(grade){return (data.setup.gradeSubjects[grade]||[]).slice().sort((a,b)=>a.localeCompare(b,"nb"))}
+function gradeTopics(grade,subject){return data.setup.gradeTopics?.[grade]?.[subject]||{}}
+function classGrade(cls){return data.setup.classGrades[cls]||""}
 
+function renderAll(){
+  const classes=classNames();
+  fill("setupClassGrade",data.setup.grades,"Velg trinn");
+  fill("setupGrade",data.setup.grades,"Velg trinn");
+  fill("planGrade",data.setup.grades,"Velg trinn");
+  fill("lessonClass",classes,"Velg klasse");
+  fill("lostClass",classes,"Velg klasse");
 
+  updateSetupSubjects();
+  updatePlanSubjects();
+  updateLessonSubjects();
+  updateLostSubjects();
 
-// Oppgrader eldre timeregistreringer.
-data.lessons = data.lessons.map(l => ({
-  ...l,
-  mainTopic: l.mainTopic || l.topic || "",
-  subTopic: l.subTopic || ""
-}));
-
-// Oppgrader eldre årsplaner: behold klassefelt som legacy dersom trinn ikke finnes.
-data.plans = data.plans.map(p => ({
-  ...p,
-  grade: p.grade || "",
-  mainTopic: p.mainTopic || p.topic || "",
-  subTopic: p.subTopic || ""
-}));
-// Oppgrader årsplanpunkter fra eldre versjoner med ett tema-felt.
-data.plans = data.plans.map(p => ({
-  ...p,
-  mainTopic: p.mainTopic || p.topic || "",
-  subTopic: p.subTopic || ""
-}));
-
-
-for (const cls of Object.keys(data.classes)) {
-  const val = data.classes[cls];
-  if (Array.isArray(val)) {
-    data.classes[cls] = val.map((item, i) => {
-      if (typeof item === "string") return {id:i+1, name:item};
-      return {id:item.id || i+1, name:item.name || String(item)};
-    });
-  }
+  renderClasses();
+  renderTopics();
+  renderPlans();
+  renderLessons();
+  renderLost();
+  renderStats();
 }
 
-
-
-function persist(){
-  localStorage.setItem("laereroversikt_v1", JSON.stringify(data));
-  renderAll();
-}
-
+/* Tabs */
 document.querySelectorAll(".tab-btn").forEach(btn=>{
   btn.addEventListener("click",()=>{
     document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
@@ -664,884 +468,277 @@ document.querySelectorAll(".tab-btn").forEach(btn=>{
     document.getElementById(btn.dataset.tab).classList.add("active");
   });
 });
-document.getElementById("setupSubjectClass")?.addEventListener("change",renderSetupLists);
-document.getElementById("setupTopicSubject")?.addEventListener("change",renderSetupTopicList);
 
-
-function isoWeek(date=new Date()){
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-  const dayNum = d.getUTCDay() || 7;
-  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
-  return Math.ceil((((d-yearStart)/86400000)+1)/7);
-}
-
-function lessonDateObject(){
-  const value=document.getElementById("lessonDate")?.value;
-  return value ? new Date(value+"T12:00:00") : new Date();
-}
-
-function classGrade(cls){
-  return data.setup.classGrades?.[cls] || "";
-}
-
-function planEntriesForGrade(grade,subject){
-  return data.plans
-    .filter(p=>p.grade===grade && p.subject===subject)
-    .slice()
-    .sort((a,b)=>a.from-b.from);
-}
-
-function planEntriesFor(cls,subject){
-  const grade=classGrade(cls);
-  return planEntriesForGrade(grade,subject);
-}
-
-function planForWeek(cls,subject,week){
-  return planEntriesFor(cls,subject).find(p=>week>=Number(p.from) && week<=Number(p.to));
-}
-
-function updateLessonWeekAndPlan(){
-  const week=isoWeek(lessonDateObject());
-  const display=document.getElementById("lessonWeekDisplay");
-  if(display) display.textContent=`Uke ${week}`;
-  updateLessonTopics();
-}
-
-function updateLessonSubTopics(){
-  const cls=document.getElementById("lessonClass")?.value||"";
-  const subject=document.getElementById("lessonSubject")?.value||"";
-  const grade=classGrade(cls);
-  const main=document.getElementById("lessonMainTopic")?.value||"";
-  const subs=(data.setup.gradeTopics?.[grade]?.[subject]?.[main] || []).slice().sort((a,b)=>a.localeCompare(b,"nb"));
-
-  fillSelect("lessonSubTopic",subs,"Velg undertema");
-
-  const week=isoWeek(lessonDateObject());
-  const planned=planForWeek(cls,subject,week);
-  if(planned?.mainTopic===main && planned?.subTopic && subs.includes(planned.subTopic)){
-    document.getElementById("lessonSubTopic").value=planned.subTopic;
-  }
-  renderLessonPlanLink();
-}
-
-function renderLessonPlanLink(){
-  const box=document.getElementById("lessonPlanLink");
-  if(!box) return;
-
-  const cls=document.getElementById("lessonClass")?.value||"";
-  const subject=document.getElementById("lessonSubject")?.value||"";
-  const main=document.getElementById("lessonMainTopic")?.value||"";
-  const sub=document.getElementById("lessonSubTopic")?.value||"";
-  const week=isoWeek(lessonDateObject());
-  const grade=classGrade(cls);
-
-  if(!cls || !subject){
-    box.innerHTML='<strong>Planlagt denne uken</strong><span class="muted">Velg klasse og fag.</span>';
-    return;
-  }
-
-  if(!grade){
-    box.innerHTML=`<strong>Klassen mangler trinn</strong><span class="muted">Gå til Oppsett og koble ${escapeHtml(cls)} til et trinn.</span>`;
-    return;
-  }
-
-  const planned=planForWeek(cls,subject,week);
-  if(!planned){
-    box.innerHTML=`<strong>Uke ${week}: Ingen årsplan registrert</strong><span class="muted">${escapeHtml(cls)} tilhører ${escapeHtml(grade)}. Legg inn årsplan for ${escapeHtml(grade)} · ${escapeHtml(subject)}.</span>`;
-    return;
-  }
-
-  const period=planned.from===planned.to ? `uke ${planned.from}` : `uke ${planned.from}–${planned.to}`;
-  const match=main===planned.mainTopic && sub===planned.subTopic;
-
-  box.innerHTML=`
-    <strong>${escapeHtml(grade)} · uke ${week}: ${escapeHtml(planned.mainTopic)} → ${escapeHtml(planned.subTopic)}</strong>
-    <span class="muted">Planlagt periode: ${period}.${main && sub ? (match ? " Valget følger årsplanen." : " Du har valgt et annet tema enn planen for denne uka.") : ""}</span>`;
-}
-
-
-function setupClasses(){
-  return Object.keys(data.setup.classes).sort((a,b)=>a.localeCompare(b,"nb"));
-}
-function subjectsFor(cls){
-  const grade=data.setup.classGrades?.[cls] || "";
-  return (data.setup.gradeSubjects?.[grade] || []).slice().sort((a,b)=>a.localeCompare(b,"nb"));
-}
-function topicsFor(cls,subject){
-  const grade=data.setup.classGrades?.[cls] || "";
-  const groups=data.setup.gradeTopics?.[grade]?.[subject] || {};
-  return Object.keys(groups).sort((a,b)=>a.localeCompare(b,"nb"));
-}
-function fillSelect(id, values, placeholder="Velg..."){
-  const el=document.getElementById(id);
-  if(!el) return;
-  const old=el.value;
-  el.innerHTML=`<option value="">${placeholder}</option>` + values.map(v=>`<option value="${escapeAttr(v)}">${escapeHtml(v)}</option>`).join("");
-  if(values.includes(old)) el.value=old;
-}
-function refreshSetupDrivenSelects(){
-  const classes=setupClasses();
-  ["lessonClass","lostClass"].forEach(id=>fillSelect(id,classes,"Velg klasse"));
-
-  const grade=document.getElementById("setupGradeForTopics")?.value||"";
-  fillSelect("setupGradeSubject",gradeSubjects(grade),"Velg fag");
-
-  updateLessonSubjects();
-  updateLostSubjects();
-  updatePlanSubjectsFromSetup();
-  renderSetupLists();
-  renderGradeTopicSetup();
-}
-function updateLessonSubjects(){
-  const cls=document.getElementById("lessonClass")?.value||"";
-  const grade=classGrade(cls);
-  const subjects=(data.setup.gradeSubjects?.[grade] || []).slice().sort((a,b)=>a.localeCompare(b,"nb"));
-  fillSelect("lessonSubject",subjects,"Velg fag");
-  updateLessonTopics();
-}
-function updateLessonTopics(){
-  const cls=document.getElementById("lessonClass")?.value||"";
-  const subject=document.getElementById("lessonSubject")?.value||"";
-  const grade=classGrade(cls);
-  const groups=data.setup.gradeTopics?.[grade]?.[subject] || {};
-  const mains=Object.keys(groups).sort((a,b)=>a.localeCompare(b,"nb"));
-
-  fillSelect("lessonMainTopic",mains,"Velg hovedtema");
-
-  const week=isoWeek(lessonDateObject());
-  const planned=planForWeek(cls,subject,week);
-  if(planned?.mainTopic && mains.includes(planned.mainTopic)){
-    document.getElementById("lessonMainTopic").value=planned.mainTopic;
-  }
-  updateLessonSubTopics();
-}
-function updateLostSubjects(){
-  const cls=document.getElementById("lostClass")?.value||"";
-  const grade=classGrade(cls);
-  const subjects=(data.setup.gradeSubjects?.[grade] || []).slice().sort((a,b)=>a.localeCompare(b,"nb"));
-  fillSelect("lostSubject",subjects,"Velg fag");
-}
-
-function updateSetupGradeSubjects(){
-  const grade=document.getElementById("setupGradeForTopics")?.value||"";
-  fillSelect("setupGradeSubject",gradeSubjects(grade),"Velg fag");
-  renderGradeTopicSetup();
-}
-
-function gradeSubjects(grade){
-  return (data.setup.gradeSubjects?.[grade] || []).slice().sort((a,b)=>a.localeCompare(b,"nb"));
-}
-
-function addGradeSubject(){
-  const grade=document.getElementById("setupGradeForTopics").value;
-  const subject=document.getElementById("setupNewSubject").value.trim();
-  if(!grade || !subject) return alert("Velg trinn og skriv inn fag.");
-
-  data.setup.gradeSubjects ||= {};
-  data.setup.gradeSubjects[grade] ||= [];
-  if(!data.setup.gradeSubjects[grade].includes(subject)){
-    data.setup.gradeSubjects[grade].push(subject);
-  }
-  data.setup.gradeTopics ||= {};
-  data.setup.gradeTopics[grade] ||= {};
-  data.setup.gradeTopics[grade][subject] ||= {};
-
-  document.getElementById("setupNewSubject").value="";
-  localStorage.setItem("laereroversikt_v1", JSON.stringify(data));
-
-  fillSelect("setupGradeSubject",gradeSubjects(grade),"Velg fag");
-  document.getElementById("setupGradeSubject").value=subject;
-  renderAll();
-  document.getElementById("setupGradeForTopics").value=grade;
-  fillSelect("setupGradeSubject",gradeSubjects(grade),"Velg fag");
-  document.getElementById("setupGradeSubject").value=subject;
-  renderGradeTopicSetup();
-}
-
-// 1) Koble eldre klasser til trinn der det kan utledes av klassenavnet.
-for(const cls of Object.keys(data.setup.classes||{})){
-  if(!data.setup.classGrades[cls]){
-    const inferred=inferGradeFromClassName(cls);
-    if(inferred) data.setup.classGrades[cls]=inferred;
-  }
-}
-
-// 2) Flytt eldre klassebaserte fag til trinnbaserte fag.
-for(const [cls,classData] of Object.entries(data.setup.classes||{})){
-  const grade=data.setup.classGrades[cls] || inferGradeFromClassName(cls);
-  if(!grade) continue;
-
-  const subjects=classData?.subjects || {};
-  data.setup.gradeSubjects[grade] ||= [];
-  data.setup.gradeTopics[grade] ||= {};
-
-  for(const [subject,legacyTopics] of Object.entries(subjects)){
-    if(!data.setup.gradeSubjects[grade].includes(subject)){
-      data.setup.gradeSubjects[grade].push(subject);
-    }
-    data.setup.gradeTopics[grade][subject] ||= {};
-
-    // Eldre "tema"-lister hadde ikke undertema. Behold dem som hovedtema.
-    if(Array.isArray(legacyTopics)){
-      for(const main of legacyTopics){
-        if(typeof main==="string" && main.trim()){
-          data.setup.gradeTopics[grade][subject][main] ||= [];
-        }
-      }
-    }
-  }
-}
-
-// 3) Bruk eksisterende årsplan til å fylle grunnbasen med hoved- og undertema.
-for(const p of data.plans||[]){
-  const grade=p.grade || "";
-  const subject=p.subject || "";
-  const main=p.mainTopic || "";
-  const sub=p.subTopic || "";
-  if(!grade || !subject) continue;
-
-  data.setup.gradeSubjects[grade] ||= [];
-  if(!data.setup.gradeSubjects[grade].includes(subject)){
-    data.setup.gradeSubjects[grade].push(subject);
-  }
-
-  data.setup.gradeTopics[grade] ||= {};
-  data.setup.gradeTopics[grade][subject] ||= {};
-
-  if(main){
-    data.setup.gradeTopics[grade][subject][main] ||= [];
-    if(sub && !data.setup.gradeTopics[grade][subject][main].includes(sub)){
-      data.setup.gradeTopics[grade][subject][main].push(sub);
-    }
-  }
-}
-
-  data.setup.gradeTopics[grade] ||= {};
-  data.setup.gradeTopics[grade][subject] ||= {};
-
-  document.getElementById("setupNewSubject").value="";
-  persist();
-}
-
-function addGradeTopic(){
-  const grade=document.getElementById("setupGradeForTopics").value;
-  const subject=document.getElementById("setupGradeSubject").value;
-  const main=document.getElementById("setupMainTopic").value.trim();
-  const sub=document.getElementById("setupSubTopic").value.trim();
-
-  if(!grade || !subject || !main || !sub){
-    return alert("Velg trinn og fag, og fyll inn hovedtema og undertema.");
-  }
-
-  data.setup.gradeTopics ||= {};
-  data.setup.gradeTopics[grade] ||= {};
-  data.setup.gradeTopics[grade][subject] ||= {};
-  data.setup.gradeTopics[grade][subject][main] ||= [];
-
-  if(!data.setup.gradeTopics[grade][subject][main].includes(sub)){
-    data.setup.gradeTopics[grade][subject][main].push(sub);
-  }
-
-  document.getElementById("setupMainTopic").value="";
-  document.getElementById("setupSubTopic").value="";
-  localStorage.setItem("laereroversikt_v1", JSON.stringify(data));
-
-  renderAll();
-  document.getElementById("setupGradeForTopics").value=grade;
-  fillSelect("setupGradeSubject",gradeSubjects(grade),"Velg fag");
-  document.getElementById("setupGradeSubject").value=subject;
-  renderGradeTopicSetup();
-}
-
-// 1) Koble eldre klasser til trinn der det kan utledes av klassenavnet.
-for(const cls of Object.keys(data.setup.classes||{})){
-  if(!data.setup.classGrades[cls]){
-    const inferred=inferGradeFromClassName(cls);
-    if(inferred) data.setup.classGrades[cls]=inferred;
-  }
-}
-
-// 2) Flytt eldre klassebaserte fag til trinnbaserte fag.
-for(const [cls,classData] of Object.entries(data.setup.classes||{})){
-  const grade=data.setup.classGrades[cls] || inferGradeFromClassName(cls);
-  if(!grade) continue;
-
-  const subjects=classData?.subjects || {};
-  data.setup.gradeSubjects[grade] ||= [];
-  data.setup.gradeTopics[grade] ||= {};
-
-  for(const [subject,legacyTopics] of Object.entries(subjects)){
-    if(!data.setup.gradeSubjects[grade].includes(subject)){
-      data.setup.gradeSubjects[grade].push(subject);
-    }
-    data.setup.gradeTopics[grade][subject] ||= {};
-
-    // Eldre "tema"-lister hadde ikke undertema. Behold dem som hovedtema.
-    if(Array.isArray(legacyTopics)){
-      for(const main of legacyTopics){
-        if(typeof main==="string" && main.trim()){
-          data.setup.gradeTopics[grade][subject][main] ||= [];
-        }
-      }
-    }
-  }
-}
-
-// 3) Bruk eksisterende årsplan til å fylle grunnbasen med hoved- og undertema.
-for(const p of data.plans||[]){
-  const grade=p.grade || "";
-  const subject=p.subject || "";
-  const main=p.mainTopic || "";
-  const sub=p.subTopic || "";
-  if(!grade || !subject) continue;
-
-  data.setup.gradeSubjects[grade] ||= [];
-  if(!data.setup.gradeSubjects[grade].includes(subject)){
-    data.setup.gradeSubjects[grade].push(subject);
-  }
-
-  data.setup.gradeTopics[grade] ||= {};
-  data.setup.gradeTopics[grade][subject] ||= {};
-
-  if(main){
-    data.setup.gradeTopics[grade][subject][main] ||= [];
-    if(sub && !data.setup.gradeTopics[grade][subject][main].includes(sub)){
-      data.setup.gradeTopics[grade][subject][main].push(sub);
-    }
-  }
-}
-
-  data.setup.gradeTopics[grade] ||= {};
-  data.setup.gradeTopics[grade][subject] ||= {};
-  data.setup.gradeTopics[grade][subject][main] ||= [];
-
-  if(!data.setup.gradeTopics[grade][subject][main].includes(sub)){
-    data.setup.gradeTopics[grade][subject][main].push(sub);
-  }
-
-  document.getElementById("setupMainTopic").value="";
-  document.getElementById("setupSubTopic").value="";
-  persist();
-}
-
-function deleteGradeSubject(grade,subject){
-  data.setup.gradeSubjects[grade]=(data.setup.gradeSubjects[grade]||[]).filter(s=>s!==subject);
-  if(data.setup.gradeTopics?.[grade]) delete data.setup.gradeTopics[grade][subject];
-  persist();
-}
-
-function deleteGradeTopic(grade,subject,main,sub){
-  const arr=data.setup.gradeTopics?.[grade]?.[subject]?.[main];
-  if(!arr) return;
-  data.setup.gradeTopics[grade][subject][main]=arr.filter(x=>x!==sub);
-  if(!data.setup.gradeTopics[grade][subject][main].length){
-    delete data.setup.gradeTopics[grade][subject][main];
-  }
-  persist();
-}
-
-function renderGradeTopicSetup(){
-  const grade=document.getElementById("setupGradeForTopics")?.value||"";
-  const subject=document.getElementById("setupGradeSubject")?.value||"";
-  const box=document.getElementById("setupGradeTopicList");
-  if(!box) return;
-
-  const subjects=gradeSubjects(grade);
-  if(!grade){
-    box.innerHTML='<div class="empty">Velg trinn.</div>';
-    return;
-  }
-
-  let htmlParts="";
-  if(subjects.length){
-    htmlParts += `<div style="margin-bottom:10px"><strong>Fag:</strong> ` +
-      subjects.map(s=>`<span class="setup-badge">${escapeHtml(s)}</span>`).join("") +
-      `</div>`;
-  }
-
-  if(!subject){
-    box.innerHTML=htmlParts + '<div class="empty">Velg fag for å se hovedtema og undertema.</div>';
-    return;
-  }
-
-  const groups=data.setup.gradeTopics?.[grade]?.[subject] || {};
-  const mains=Object.keys(groups).sort((a,b)=>a.localeCompare(b,"nb"));
-
-  htmlParts += mains.length ? mains.map(main=>`
-    <div style="padding:10px 0;border-top:1px solid var(--border)">
-      <strong>${escapeHtml(main)}</strong><br>
-      ${(groups[main]||[]).length
-        ? (groups[main]||[]).map(sub=>`<span class="setup-badge">${escapeHtml(sub)}</span>`).join("")
-        : '<span class="muted">Ingen undertema registrert ennå.</span>'}
-    </div>`).join("") : '<div class="empty">Ingen hovedtema registrert for valgt fag.</div>';
-
-  box.innerHTML=htmlParts;
-}
-
-function addSetupClass(){
-  const name=document.getElementById("setupClassName").value.trim();
+/* Oppsett */
+document.getElementById("addClassBtn").addEventListener("click",()=>{
+  const cls=document.getElementById("setupClass").value.trim();
   const grade=document.getElementById("setupClassGrade").value;
-  if(!name || !grade) return alert("Skriv inn klasse og velg trinn.");
-  if(!data.setup.classes[name]) data.setup.classes[name]={subjects:{}};
-  data.setup.classGrades[name]=grade;
-  document.getElementById("setupClassName").value="";
-  persist();
+  if(!cls||!grade) return alert("Skriv inn klasse og velg trinn.");
+  data.setup.classGrades[cls]=grade;
+  data.setup.classes[cls] ||= {subjects:{}};
+  document.getElementById("setupClass").value="";
+  saveData(); renderAll();
+});
+document.getElementById("setupGrade").addEventListener("change",()=>{updateSetupSubjects();renderTopics()});
+document.getElementById("setupSubject").addEventListener("change",renderTopics);
+
+document.getElementById("addSubjectBtn").addEventListener("click",()=>{
+  const grade=document.getElementById("setupGrade").value;
+  const subject=document.getElementById("setupNewSubject").value.trim();
+  if(!grade||!subject) return alert("Velg trinn og skriv inn fag.");
+  data.setup.gradeSubjects[grade] ||= [];
+  if(!data.setup.gradeSubjects[grade].includes(subject)) data.setup.gradeSubjects[grade].push(subject);
+  data.setup.gradeTopics[grade] ||= {};
+  data.setup.gradeTopics[grade][subject] ||= {};
+  document.getElementById("setupNewSubject").value="";
+  saveData(); renderAll();
+  document.getElementById("setupGrade").value=grade;
+  updateSetupSubjects();
+  document.getElementById("setupSubject").value=subject;
+  renderTopics();
+});
+
+document.getElementById("addTopicBtn").addEventListener("click",()=>{
+  const grade=document.getElementById("setupGrade").value;
+  const subject=document.getElementById("setupSubject").value;
+  const main=document.getElementById("setupMain").value.trim();
+  const sub=document.getElementById("setupSub").value.trim();
+  if(!grade||!subject||!main||!sub) return alert("Velg trinn og fag, og fyll inn hovedtema og undertema.");
+  data.setup.gradeTopics[grade] ||= {};
+  data.setup.gradeTopics[grade][subject] ||= {};
+  data.setup.gradeTopics[grade][subject][main] ||= [];
+  if(!data.setup.gradeTopics[grade][subject][main].includes(sub)) data.setup.gradeTopics[grade][subject][main].push(sub);
+  document.getElementById("setupMain").value="";
+  document.getElementById("setupSub").value="";
+  saveData(); renderAll();
+  document.getElementById("setupGrade").value=grade;
+  updateSetupSubjects();
+  document.getElementById("setupSubject").value=subject;
+  renderTopics();
+});
+
+function updateSetupSubjects(){
+  const grade=document.getElementById("setupGrade").value;
+  fill("setupSubject",gradeSubjects(grade),"Velg fag");
 }
-function deleteSetupClass(name){
-  if(!confirm(`Slette klassen ${name} fra oppsettet?`)) return;
-  delete data.setup.classes[name];
-  delete data.setup.classGrades[name];
-  persist();
+function renderClasses(){
+  const box=document.getElementById("classList");
+  const rows=classNames();
+  box.innerHTML=rows.length?rows.map(cls=>`
+    <div class="list-row">
+      <div><strong>${esc(cls)}</strong></div>
+      <div class="muted">${esc(classGrade(cls))}</div>
+      <button class="secondary" onclick="removeClass('${esc(cls)}')">Slett</button>
+      <div></div>
+    </div>`).join(""):'<div class="empty">Ingen klasser registrert.</div>';
 }
-
-
-
-
-function renderSetupLists(){
-  const classes=setupClasses();
-  const classList=document.getElementById("setupClassList");
-  if(classList){
-    classList.innerHTML=classes.length?classes.map(c=>`
-      <div class="plan-item">
-        <div><strong>${escapeHtml(c)}</strong><br><span class="muted">${escapeHtml(data.setup.classGrades[c] || "Trinn ikke valgt")}</span></div>
-        <div></div>
-        <button class="small-btn secondary" onclick="deleteSetupClass('${c.replace(/'/g,"\\'")}')">Slett</button>
-      </div>`).join(""):'<div class="empty">Ingen klasser registrert ennå.</div>';
-  }
+window.removeClass=function(cls){
+  delete data.setup.classGrades[cls];
+  delete data.setup.classes[cls];
+  data.lessons=data.lessons.filter(l=>l.cls!==cls);
+  data.lost=data.lost.filter(l=>l.cls!==cls);
+  saveData();renderAll();
 }
-
-
-function saveLesson(){
-  const cls = lessonClass.value;
-  const subject = lessonSubject.value;
-  const mainTopic = document.getElementById("lessonMainTopic").value;
-  const subTopic = document.getElementById("lessonSubTopic").value;
-  const reached = lessonReached.value.trim();
-  const lessonDateValue = document.getElementById("lessonDate").value || new Date().toISOString().slice(0,10);
-  const lessonWeek = isoWeek(new Date(lessonDateValue+"T12:00:00"));
-
-  if(!cls || !subject || !mainTopic || !subTopic || !reached){
-    return alert("Velg klasse, fag, hovedtema og undertema, og fyll inn hvor dere kom.");
-  }
-
-  data.lessons.unshift({
-    id:Date.now(),
-    cls,
-    subject,
-    mainTopic,
-    subTopic,
-    topic:`${mainTopic} – ${subTopic}`,
-    reached,
-    note:lessonNote.value.trim(),
-    date:lessonDateValue,
-    week:lessonWeek
-  });
-
-  lessonReached.value="";
-  lessonNote.value="";
-  persist();
-}
-
-function togglePlanType(){
-  const type=document.getElementById("planType").value;
-  document.getElementById("holidayWrap").style.display=type==="holiday"?"block":"none";
-  document.getElementById("teachingTopicRow").style.display=type==="holiday"?"none":"block";
-}
-function printAnnualPlan(){ window.print(); }
-
-function updatePlanSubjectsFromSetup(){
-  const grade=document.getElementById("planGrade")?.value||"";
-  const subjects=(data.setup.gradeSubjects?.[grade] || []).slice().sort((a,b)=>a.localeCompare(b,"nb"));
-  fillSelect("planSubject",subjects,"Velg fag");
-  updatePlanMainTopicsFromSetup();
-}
-
-function updatePlanMainTopicsFromSetup(){
-  const grade=document.getElementById("planGrade")?.value||"";
-  const subject=document.getElementById("planSubject")?.value||"";
-  const groups=data.setup.gradeTopics?.[grade]?.[subject] || {};
+function renderTopics(){
+  const grade=document.getElementById("setupGrade").value;
+  const subject=document.getElementById("setupSubject").value;
+  const box=document.getElementById("topicList");
+  const groups=gradeTopics(grade,subject);
   const mains=Object.keys(groups).sort((a,b)=>a.localeCompare(b,"nb"));
-
-  fillSelect("planMainTopicSelect",mains,"Velg hovedtema");
-  updatePlanSubTopicsFromSetup();
-}
-function updatePlanSubTopicsFromSetup(){
-  const grade=document.getElementById("planGrade")?.value||"";
-  const subject=document.getElementById("planSubject")?.value||"";
-  const main=document.getElementById("planMainTopicSelect")?.value||"";
-  const subs=(data.setup.gradeTopics?.[grade]?.[subject]?.[main] || []).slice().sort((a,b)=>a.localeCompare(b,"nb"));
-
-  fillSelect("planSubTopicSelect",subs,"Velg undertema");
+  if(!grade||!subject){box.innerHTML='<div class="empty">Velg trinn og fag.</div>';return}
+  if(!mains.length){box.innerHTML='<div class="empty">Ingen temaer registrert.</div>';return}
+  box.innerHTML=mains.map(main=>`
+    <div style="padding:10px 0;border-bottom:1px solid var(--border)">
+      <strong>${esc(main)}</strong><br>
+      ${(groups[main]||[]).map(sub=>`<span class="pill">${esc(sub)}</span>`).join("")}
+    </div>`).join("");
 }
 
-function savePlan(){
-  const subject=planSubject.value;
+/* Årsplan */
+document.getElementById("planGrade").addEventListener("change",updatePlanSubjects);
+document.getElementById("planSubject").addEventListener("change",updatePlanMain);
+document.getElementById("planMain").addEventListener("change",updatePlanSub);
+document.getElementById("planType").addEventListener("change",togglePlanType);
+
+function updatePlanSubjects(){
   const grade=document.getElementById("planGrade").value;
-  const from=Number(planFrom.value);
-  const to=Number(planTo.value);
+  fill("planSubject",gradeSubjects(grade),"Velg fag");
+  updatePlanMain();
+}
+function updatePlanMain(){
+  const grade=document.getElementById("planGrade").value;
+  const subject=document.getElementById("planSubject").value;
+  fill("planMain",Object.keys(gradeTopics(grade,subject)).sort((a,b)=>a.localeCompare(b,"nb")),"Velg hovedtema");
+  updatePlanSub();
+}
+function updatePlanSub(){
+  const grade=document.getElementById("planGrade").value;
+  const subject=document.getElementById("planSubject").value;
+  const main=document.getElementById("planMain").value;
+  fill("planSub",(gradeTopics(grade,subject)[main]||[]).slice().sort((a,b)=>a.localeCompare(b,"nb")),"Velg undertema");
+}
+function togglePlanType(){
+  const holiday=document.getElementById("planType").value==="holiday";
+  document.getElementById("teachingFields").style.display=holiday?"none":"grid";
+  document.getElementById("holidayFields").style.display=holiday?"block":"none";
+}
+document.getElementById("savePlanBtn").addEventListener("click",()=>{
+  const grade=document.getElementById("planGrade").value;
+  const subject=document.getElementById("planSubject").value;
   const type=document.getElementById("planType").value;
-  const mainTopic=document.getElementById("planMainTopicSelect")?.value||"";
-  const subTopic=document.getElementById("planSubTopicSelect")?.value||"";
-  const holiday=document.getElementById("planHoliday").value;
-
+  const from=Number(document.getElementById("planFrom").value);
+  const to=Number(document.getElementById("planTo").value);
   if(!grade||!subject||!from||!to) return alert("Fyll inn trinn, fag og uke.");
   if(to<from) return alert("Til-uke kan ikke være før fra-uke.");
-  if(type==="teaching" && (!mainTopic||!subTopic)) return alert("Velg hovedtema og undertema.");
-
-  data.plans.push({
-    id:Date.now(),subject,grade,from,to,type,
-    holiday:type==="holiday"?holiday:"",
-    mainTopic:type==="teaching"?mainTopic:"",
-    subTopic:type==="teaching"?subTopic:"",
-    topic:type==="teaching"?`${mainTopic} – ${subTopic}`:holiday
-  });
-
-  document.getElementById("planMainTopicSelect").value="";
-  updatePlanSubTopicsFromSetup();
-  planFrom.value="";
-  planTo.value="";
-  document.getElementById("planType").value="teaching";
-  togglePlanType();
-  persist();
-}
-
-function saveStudents(){
-  const cls = labClass.value;
-  const names = studentNames.value.split("\n").map(x=>x.trim()).filter(Boolean);
-  if(!cls || !names.length) return alert("Velg klasse og skriv inn minst én elev.");
-
-  const existing = Array.isArray(data.classes[cls]) ? data.classes[cls] : [];
-  const byName = new Map(existing.map(s => [s.name, s.id]));
-  let nextId = existing.reduce((m,s)=>Math.max(m, Number(s.id)||0),0) + 1;
-
-  data.classes[cls] = names.map(name => {
-    if (byName.has(name)) return {id:byName.get(name), name};
-    return {id:nextId++, name};
-  });
-
-  persist();
-  alert("Elevlisten er lagret.");
-}
-
-function renderStudentRegisterPreview(){
-  const box = document.getElementById("studentRegisterPreview");
-  if(!box) return;
-  const cls = document.getElementById("labClass")?.value || "";
-  const students = Array.isArray(data.classes[cls]) ? data.classes[cls] : [];
-  if(!cls || !students.length){
-    box.innerHTML = '<div class="empty">Ingen elevliste lagret for valgt klasse.</div>';
-    return;
-  }
-  box.innerHTML = students.map(s=>`
-    <div class="plan-item">
-      <div><strong>Elev ${s.id}</strong></div>
-      <div>${escapeHtml(s.name)}</div>
-      <div></div>
-    </div>`).join("");
-}
-
-function createLab(){
-  const cls = newLabClass.value;
-  const name = labName.value.trim();
-  const date = labDate.value || new Date().toISOString().slice(0,10);
-  if(!cls || !name) return alert("Fyll inn klasse og navn på labben.");
-  const students = (data.classes[cls] || []).map(student=>({
-    id: student.id,
-    name: student.name,
-    status:"Gjennomført",
-    tags:[],
-    note:""
-  }));
-  if(!students.length) return alert("Lagre elevlisten for klassen først.");
-  data.labs.unshift({id:Date.now(),cls,name,date,students});
-  labName.value="";
-  persist();
-}
-
-function getPlanStatus(lesson){
-  const week = Number(lesson.week || isoWeek(new Date(lesson.date+"T12:00:00")));
-  const grade = classGrade(lesson.cls);
-  const current = planForWeek(lesson.cls, lesson.subject, week);
-
-  if(!grade) return {text:"Mangler trinn", cls:"warn", planned:"–"};
-  if(!current) return {text:"Ingen plan", cls:"warn", planned:"–"};
-
-  const mainMatch=current.mainTopic===lesson.mainTopic;
-  const subMatch=current.subTopic===lesson.subTopic;
-  const match=mainMatch && subMatch;
-
-  return {
-    text: match ? "I tråd med plan" : (mainMatch ? "Samme hovedtema" : "Avvik fra plan"),
-    cls: match ? "good" : "warn",
-    planned:`${current.mainTopic} → ${current.subTopic}`
-  };
-}
-
-function renderProgress(){
-  const container = document.getElementById("progressList");
-  const latest = {};
-  data.lessons.forEach(l=>{
-    const key=l.cls+"|"+l.subject;
-    if(!latest[key]) latest[key]=l;
-  });
-  const items = Object.values(latest);
-  if(!items.length){container.innerHTML='<div class="empty">Ingen undervisningstimer registrert ennå.</div>';return;}
-  container.innerHTML = items.map(l=>{
-    const st=getPlanStatus(l);
-    return `<div class="progress-item">
-      <div><strong>${escapeHtml(l.cls)} · ${escapeHtml(l.subject)}</strong><br><span class="muted">${escapeHtml(classGrade(l.cls))} · Uke ${l.week} · ${escapeHtml(l.mainTopic || l.topic)}${l.subTopic ? " → "+escapeHtml(l.subTopic) : ""}</span></div>
-      <div><span class="muted">Planlagt</span><br>${escapeHtml(st.planned)}</div>
-      <div><span class="muted">Faktisk</span><br>${escapeHtml(l.reached)}</div>
-      <span class="status ${st.cls}">${st.text}</span>
-    </div>`;
-  }).join("");
-}
-
-function renderLessons(){
-  const c=document.getElementById("lessonLog");
-  if(!data.lessons.length){c.innerHTML='<div class="empty">Ingen timer registrert ennå.</div>';return;}
-  c.innerHTML=data.lessons.slice(0,12).map(l=>`
-    <div class="log-item">
-      <strong>${escapeHtml(l.cls)} · ${escapeHtml(l.subject)} · ${escapeHtml(l.topic)}</strong>
-      <div class="muted">${l.date} · uke ${l.week}</div>
-      <div>Kom til: ${escapeHtml(l.reached)}</div>
-      ${l.next?`<div>Neste: ${escapeHtml(l.next)}</div>`:""}
-      ${l.note?`<div class="muted">Notat: ${escapeHtml(l.note)}</div>`:""}
-    </div>`).join("");
-}
+  const main=document.getElementById("planMain").value;
+  const sub=document.getElementById("planSub").value;
+  const holiday=document.getElementById("planHoliday").value;
+  if(type==="teaching" && (!main||!sub)) return alert("Velg hovedtema og undertema.");
+  data.plans.push({id:Date.now(),grade,subject,type,from,to,mainTopic:type==="teaching"?main:"",subTopic:type==="teaching"?sub:"",holiday:type==="holiday"?holiday:""});
+  saveData();renderAll();
+});
+document.getElementById("printBtn").addEventListener("click",()=>window.print());
 
 function renderPlans(){
-  const c=document.getElementById("planList");
-  if(!data.plans.length){c.innerHTML='<div class="empty">Ingen årsplanpunkter registrert ennå.</div>';return;}
-  c.innerHTML=data.plans.slice().sort((a,b)=>{
+  const box=document.getElementById("planList");
+  if(!data.plans.length){box.innerHTML='<div class="empty">Ingen årsplanpunkter registrert.</div>';return}
+  box.innerHTML=data.plans.slice().sort((a,b)=>{
     const g=(a.grade||"").localeCompare(b.grade||"","nb"); if(g!==0)return g;
     const s=(a.subject||"").localeCompare(b.subject||"","nb"); if(s!==0)return s;
-    return Number(a.from)-Number(b.from);
-  }).map(p=>{
-    const holiday=p.type==="holiday";
-    return `<div class="edit-row ${holiday?"holiday-row":""}">
+    return a.from-b.from;
+  }).map(p=>`
+    <div class="list-row ${p.type==="holiday"?"holiday":""}">
       <div><strong>Uke ${p.from}${p.to!==p.from?"–"+p.to:""}</strong></div>
-      <div><strong>${escapeHtml(p.grade||"Ukjent trinn")} · ${escapeHtml(p.subject)}</strong><br>
-      ${holiday?`<span class="holiday-label">${escapeHtml(p.holiday||p.topic||"Ferie / fri")}</span>`:`<span class="muted">${escapeHtml(p.mainTopic)} → ${escapeHtml(p.subTopic)}</span>`}</div>
-      <button class="small-btn secondary no-print" onclick="editPlan(${p.id})">Rediger</button>
-      <button class="small-btn secondary no-print" onclick="deletePlan(${p.id})">Slett</button>
-    </div>`;
-  }).join("");
+      <div>
+        <strong>${esc(p.grade)} · ${esc(p.subject)}</strong><br>
+        <span class="muted">${p.type==="holiday"?esc(p.holiday):`${esc(p.mainTopic)} → ${esc(p.subTopic)}`}</span>
+      </div>
+      <button class="secondary" onclick="editPlan(${p.id})">Rediger</button>
+      <button class="secondary" onclick="removePlan(${p.id})">Slett</button>
+    </div>`).join("");
 }
-
-function editPlan(id){
+window.removePlan=function(id){data.plans=data.plans.filter(p=>p.id!==id);saveData();renderAll()}
+window.editPlan=function(id){
   const p=data.plans.find(x=>x.id===id); if(!p)return;
-  const grade=prompt("Trinn:",p.grade||""); if(grade===null)return;
-  const subject=prompt("Fag:",p.subject||""); if(subject===null)return;
   const from=prompt("Fra uke:",p.from); if(from===null)return;
   const to=prompt("Til uke:",p.to); if(to===null)return;
-  const fromNum=Number(from),toNum=Number(to);
-  if(!grade.trim()||!subject.trim()||!fromNum||!toNum)return alert("Trinn, fag og uke må fylles ut.");
-  if(toNum<fromNum)return alert("Til-uke kan ikke være før fra-uke.");
+  p.from=Number(from); p.to=Number(to);
   if(p.type==="holiday"){
-    const holiday=prompt("Ferie / fri:",p.holiday||"Høstferie"); if(holiday===null||!holiday.trim())return;
-    Object.assign(p,{grade:grade.trim(),subject:subject.trim(),from:fromNum,to:toNum,holiday:holiday.trim(),topic:holiday.trim()});
+    const h=prompt("Ferie / fri:",p.holiday); if(h!==null)p.holiday=h.trim();
   }else{
-    const main=prompt("Hovedtema:",p.mainTopic||""); if(main===null)return;
-    const sub=prompt("Undertema:",p.subTopic||""); if(sub===null)return;
-    if(!main.trim()||!sub.trim())return alert("Hovedtema og undertema må fylles ut.");
-    Object.assign(p,{grade:grade.trim(),subject:subject.trim(),from:fromNum,to:toNum,mainTopic:main.trim(),subTopic:sub.trim(),topic:`${main.trim()} – ${sub.trim()}`});
+    const m=prompt("Hovedtema:",p.mainTopic); if(m===null)return;
+    const s=prompt("Undertema:",p.subTopic); if(s===null)return;
+    p.mainTopic=m.trim(); p.subTopic=s.trim();
   }
-  persist();
+  saveData();renderAll();
 }
 
-function printAnnualPlan(){
-  window.print();
+/* Enkelttimer */
+document.getElementById("lessonClass").addEventListener("change",updateLessonSubjects);
+document.getElementById("lessonSubject").addEventListener("change",updateLessonMain);
+document.getElementById("lessonMain").addEventListener("change",updateLessonSub);
+document.getElementById("lessonDate").addEventListener("change",()=>{
+  document.getElementById("lessonWeek").value=isoWeek(new Date(document.getElementById("lessonDate").value+"T12:00:00"));
+});
+
+function updateLessonSubjects(){
+  const grade=classGrade(document.getElementById("lessonClass").value);
+  fill("lessonSubject",gradeSubjects(grade),"Velg fag");
+  updateLessonMain();
+}
+function updateLessonMain(){
+  const grade=classGrade(document.getElementById("lessonClass").value);
+  const subject=document.getElementById("lessonSubject").value;
+  fill("lessonMain",Object.keys(gradeTopics(grade,subject)).sort((a,b)=>a.localeCompare(b,"nb")),"Velg hovedtema");
+  updateLessonSub();
+
+  const week=Number(document.getElementById("lessonWeek").value);
+  const planned=data.plans.find(p=>p.type!=="holiday" && p.grade===grade && p.subject===subject && week>=p.from && week<=p.to);
+  if(planned){
+    document.getElementById("lessonMain").value=planned.mainTopic;
+    updateLessonSub();
+    document.getElementById("lessonSub").value=planned.subTopic;
+  }
+}
+function updateLessonSub(){
+  const grade=classGrade(document.getElementById("lessonClass").value);
+  const subject=document.getElementById("lessonSubject").value;
+  const main=document.getElementById("lessonMain").value;
+  fill("lessonSub",(gradeTopics(grade,subject)[main]||[]).slice().sort((a,b)=>a.localeCompare(b,"nb")),"Velg undertema");
+}
+document.getElementById("saveLessonBtn").addEventListener("click",()=>{
+  const cls=document.getElementById("lessonClass").value;
+  const subject=document.getElementById("lessonSubject").value;
+  const main=document.getElementById("lessonMain").value;
+  const sub=document.getElementById("lessonSub").value;
+  const date=document.getElementById("lessonDate").value;
+  const week=Number(document.getElementById("lessonWeek").value);
+  const reached=document.getElementById("lessonReached").value.trim();
+  const note=document.getElementById("lessonNote").value.trim();
+  if(!cls||!subject||!main||!sub||!date||!week||!reached) return alert("Fyll inn alle nødvendige felter.");
+  data.lessons.unshift({id:Date.now(),cls,subject,mainTopic:main,subTopic:sub,date,week,reached,note});
+  document.getElementById("lessonReached").value="";
+  document.getElementById("lessonNote").value="";
+  saveData();renderAll();
+});
+function renderLessons(){
+  const box=document.getElementById("lessonList");
+  if(!data.lessons.length){box.innerHTML='<div class="empty">Ingen timer registrert.</div>';return}
+  box.innerHTML=data.lessons.slice(0,15).map(l=>`
+    <div class="lesson-card">
+      <strong>${esc(l.cls)} · ${esc(l.subject)} · uke ${l.week}</strong>
+      <div>${esc(l.mainTopic)} → ${esc(l.subTopic)}</div>
+      <div class="muted">Kom til: ${esc(l.reached)}${l.note?` · ${esc(l.note)}`:""}</div>
+    </div>`).join("");
 }
 
-function deletePlan(id){
-  data.plans=data.plans.filter(p=>p.id!==id);
-  persist();
+/* Mistet tid */
+document.getElementById("lostClass").addEventListener("change",updateLostSubjects);
+function updateLostSubjects(){
+  const grade=classGrade(document.getElementById("lostClass").value);
+  fill("lostSubject",gradeSubjects(grade),"Velg fag");
 }
-
-function renderLabSelect(){
-  const s=document.getElementById("labSelect");
-  const old=s.value;
-  s.innerHTML='<option value="">Velg...</option>'+data.labs.map(l=>
-    `<option value="${l.id}">${escapeHtml(l.cls)} · ${escapeHtml(l.name)} · ${l.date}</option>`
-  ).join("");
-  if(data.labs.some(l=>String(l.id)===old)) s.value=old;
+document.getElementById("saveLostBtn").addEventListener("click",()=>{
+  const cls=document.getElementById("lostClass").value;
+  const subject=document.getElementById("lostSubject").value;
+  const date=document.getElementById("lostDate").value;
+  const hours=Number(document.getElementById("lostHours").value);
+  const reason=document.getElementById("lostReason").value;
+  if(!cls||!subject||!date||!hours) return alert("Fyll inn alle feltene.");
+  data.lost.unshift({id:Date.now(),cls,subject,date,hours,reason});
+  saveData();renderAll();
+});
+function fmtHours(n){return Number.isInteger(n)?`${n} t`:`${n.toFixed(1).replace(".",",")} t`}
+function renderLost(){
+  const total=data.lost.reduce((s,x)=>s+Number(x.hours||0),0);
+  document.getElementById("lostTotal").textContent=fmtHours(total);
+  document.getElementById("lostMath").textContent=fmtHours(data.lost.filter(x=>x.subject==="Matematikk").reduce((s,x)=>s+Number(x.hours||0),0));
+  document.getElementById("lostScience").textContent=fmtHours(data.lost.filter(x=>x.subject==="Naturfag").reduce((s,x)=>s+Number(x.hours||0),0));
+  const box=document.getElementById("lostList");
+  box.innerHTML=data.lost.length?data.lost.map(x=>`
+    <div class="list-row">
+      <div><strong>${esc(x.date)}</strong></div>
+      <div>${esc(x.cls)} · ${esc(x.subject)}<br><span class="muted">${esc(x.reason)} · ${fmtHours(x.hours)}</span></div>
+      <button class="secondary" onclick="removeLost(${x.id})">Slett</button><div></div>
+    </div>`).join(""):'<div class="empty">Ingen bortfall registrert.</div>';
 }
-
-function renderActiveLab(){
-  const id=Number(document.getElementById("labSelect").value);
-  const c=document.getElementById("activeLab");
-  const lab=data.labs.find(l=>l.id===id);
-  if(!lab){c.innerHTML='<div class="empty">Velg en labb for å registrere elevene.</div>';return;}
-  c.innerHTML=`
-    <div style="margin-top:14px">
-      <h3>${escapeHtml(lab.name)}</h3>
-      <div class="muted">${escapeHtml(lab.cls)} · ${lab.date}</div>
-    </div>
-    ${lab.students.map((s,i)=>`
-      <div class="student-card" id="student-${i}">
-        <div class="student-head">
-          <div><strong>Elev ${s.id || (i+1)}</strong><br><span class="muted">${escapeHtml(s.name)}</span></div>
-          <button class="small-btn secondary" onclick="toggleStudent(${i})">Notater</button>
-        </div>
-        <div class="student-status">
-          ${["Gjennomført","Fravær","Ikke gjennomført"].map(st=>
-            `<button class="${s.status===st?"active":""}" onclick="setStudentStatus(${lab.id},${i},'${st}')">${st}</button>`
-          ).join("")}
-        </div>
-        <div class="student-notes">
-          <div class="muted" style="margin-bottom:8px">KI-ID: Elev ${s.id || (i+1)}</div>
-          <div class="quick-tags">
-            ${QUICK_TAGS.map(t=>`<button class="tag ${s.tags.includes(t)?"active":""}" onclick="toggleTag(${lab.id},${i},'${t.replace(/'/g,"\\'")}')">${t}</button>`).join("")}
-          </div>
-          <div style="margin-top:10px">
-            <label>Egne stikkord</label>
-            <input value="${escapeAttr(s.note)}" placeholder="f.eks. god opprydding, trenger øvelse"
-              onchange="setStudentNote(${lab.id},${i},this.value)" />
-          </div>
-        </div>
-      </div>`).join("")}
-  `;
-}
-
-function toggleStudent(i){
-  const el=document.getElementById("student-"+i);
-  if(el) el.classList.toggle("open");
-}
-
-function setStudentStatus(labId,index,status){
-  const lab=data.labs.find(l=>l.id===labId);
-  if(!lab) return;
-  lab.students[index].status=status;
-  localStorage.setItem("laereroversikt_v1", JSON.stringify(data));
-}
-
-function toggleTag(labId,index,tag){
-  const lab=data.labs.find(l=>l.id===labId);
-  if(!lab) return;
-  const arr=lab.students[index].tags;
-  const pos=arr.indexOf(tag);
-  if(pos>=0) arr.splice(pos,1); else arr.push(tag);
-  localStorage.setItem("laereroversikt_v1", JSON.stringify(data));
-  setTimeout(()=>{
-    const card=document.getElementById("student-"+index);
-    if(card) card.classList.add("open");
-  },0);
-}
-
-function setStudentNote(labId,index,note){
-  const lab=data.labs.find(l=>l.id===labId);
-  if(!lab) return;
-  lab.students[index].note=note.trim();
-  localStorage.setItem("laereroversikt_v1", JSON.stringify(data));
-}
-
-function deleteActiveLab(){
-  const id=Number(document.getElementById("labSelect").value);
-  if(!id) return;
-  if(!confirm("Slette denne labben?")) return;
-  data.labs=data.labs.filter(l=>l.id!==id);
-  persist();
-}
-
-
-function saveLostTime(){
-  const cls = document.getElementById("lostClass").value;
-  const subject = document.getElementById("lostSubject").value;
-  const d = document.getElementById("lostDate").value || new Date().toISOString().slice(0,10);
-  const hours = Number(document.getElementById("lostHours").value);
-  const reason = document.getElementById("lostReason").value;
-  const note = document.getElementById("lostNote").value.trim();
-  if(!cls || !hours || hours <= 0) return alert("Fyll inn klasse og antall timer.");
-  data.lost.unshift({id:Date.now(), cls, subject, date:d, hours, reason, note});
-  document.getElementById("lostNote").value = "";
-  persist();
-}
-
-function deleteLostTime(id){
-  data.lost = data.lost.filter(x => x.id !== id);
-  persist();
-}
-
-function formatHours(n){
-  const num = Number(n || 0);
-  return Number.isInteger(num) ? `${num} t` : `${num.toFixed(1).replace(".",",")} t`;
-}
-
-function renderLostTime(){
-  const total = data.lost.reduce((s,x)=>s+Number(x.hours||0),0);
-  const math = data.lost.filter(x=>x.subject==="Matematikk").reduce((s,x)=>s+Number(x.hours||0),0);
-  const science = data.lost.filter(x=>x.subject==="Naturfag").reduce((s,x)=>s+Number(x.hours||0),0);
-
-  document.getElementById("lostTotal").textContent = formatHours(total);
-  document.getElementById("lostMath").textContent = formatHours(math);
-  document.getElementById("lostScience").textContent = formatHours(science);
-
-  const byClass = {};
-  data.lost.forEach(x=>{
-    const key = `${x.cls}|${x.subject}`;
-    byClass[key] = (byClass[key] || 0) + Number(x.hours||0);
-  });
-  const classEntries = Object.entries(byClass).sort((a,b)=>a[0].localeCompare(b[0],"nb"));
-  document.getElementById("lostByClass").innerHTML = classEntries.length
-    ? classEntries.map(([key,h])=>{
-        const [cls,subject] = key.split("|");
-        return `<div class="plan-item">
-          <div><strong>${escapeHtml(cls)}</strong></div>
-          <div>${escapeHtml(subject)}</div>
-          <div><strong>${formatHours(h)}</strong></div>
-        </div>`;
-      }).join("")
-    : '<div class="empty">Ingen bortfalte timer registrert ennå.</div>';
-
-  const byReason = {};
-  data.lost.forEach(x=> byReason[x.reason] = (byReason[x.reason] || 0) + Number(x.hours||0));
-  const reasonEntries = Object.entries(byReason).sort((a,b)=>b[1]-a[1]);
-  document.getElementById("lostByReason").innerHTML = reasonEntries.length
-    ? reasonEntries.map(([reason,h])=>`
-        <div class="plan-item">
-          <div style="grid-column:span 2"><strong>${escapeHtml(reason)}</strong></div>
-          <div><strong>${formatHours(h)}</strong></div>
-        </div>`).join("")
-    : '<div class="empty">Ingen årsaker å vise ennå.</div>';
-
-  const log = document.getElementById("lostLog");
-  log.innerHTML = data.lost.length
-    ? data.lost.map(x=>`
-        <div class="plan-item">
-          <div><strong>${escapeHtml(x.date)}</strong><br><span class="muted">${formatHours(x.hours)}</span></div>
-          <div><strong>${escapeHtml(x.cls)} · ${escapeHtml(x.subject)}</strong><br>
-            <span class="muted">${escapeHtml(x.reason)}${x.note ? " · "+escapeHtml(x.note) : ""}</span>
-          </div>
-          <button class="small-btn secondary" onclick="deleteLostTime(${x.id})">Slett</button>
-        </div>`).join("")
-    : '<div class="empty">Ingen bortfall registrert ennå.</div>';
-}
-
-function escapeHtml(str=""){
-  return String(str).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
-}
-function escapeAttr(str=""){ return escapeHtml(str); }
+window.removeLost=function(id){data.lost=data.lost.filter(x=>x.id!==id);saveData();renderAll()}
 
 function renderStats(){
-  document.getElementById("statClasses").textContent=new Set(data.lessons.map(l=>l.cls)).size;
+  document.getElementById("statClasses").textContent=classNames().length;
   document.getElementById("statPlans").textContent=data.plans.length;
-  document.getElementById("statLost").textContent=formatHours(data.lost.reduce((s,x)=>s+Number(x.hours||0),0));
+  document.getElementById("statLost").textContent=fmtHours(data.lost.reduce((s,x)=>s+Number(x.hours||0),0));
 }
 
-function renderAll(){
-  refreshSetupDrivenSelects();
-  renderStats();
-  renderProgress();
-  renderLessons();
-  renderPlans();
-  renderLostTime();
-}
-document.getElementById("lostDate").value=new Date().toISOString().slice(0,10);
-document.getElementById("lessonDate").value=new Date().toISOString().slice(0,10);
+/* Init */
+const today=new Date();
+const iso=today.toISOString().slice(0,10);
+document.getElementById("lessonDate").value=iso;
+document.getElementById("lostDate").value=iso;
+document.getElementById("lessonWeek").value=isoWeek(today);
+togglePlanType();
+saveData();
 renderAll();
-updateLessonWeekAndPlan();
 </script>
 </body>
 </html>
